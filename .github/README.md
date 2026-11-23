@@ -19,13 +19,15 @@ sous licence GPL-3.0-or-later.
 
 Requis : macOS 14 ou plus récent, Mac avec puce Apple. L'app est signée et notarisée par Apple.
 
-Hublot ne se met pas à jour tout seul : revenez sur la page Releases pour une nouvelle version.
+Depuis la version 0.2, Hublot se met à jour tout seul : il vérifie chaque jour s'il existe une
+nouvelle version, montre ce qui change, vérifie sa signature puis l'installe. Si vous avez la 0.1,
+installez la dernière version une fois à la main.
 
 ## Vie privée
 
-Aucune mesure d'audience, aucun compte Hublot. Les intégrations facultatives (Todoist, Vercel,
-Spotify, météo Open-Meteo) utilisent vos propres jetons, rangés dans le trousseau du Mac, et ne
-contactent que le service concerné, uniquement quand vous les activez.
+Aucune mesure d'audience, aucun compte Hublot. Les intégrations facultatives, comme la file
+d'attente de Spotify, utilisent votre propre accès, rangé dans le trousseau du Mac, et ne contactent
+que le service concerné, uniquement quand vous les activez.
 
 ## Code source
 
@@ -49,8 +51,10 @@ GPL-3.0-or-later license.
 
 **Download:** take `Hublot-….dmg` from the latest [release](https://github.com/ArthurCissac/hublot/releases),
 open it and drag **Hublot** to **Applications**. macOS 14 or later, Apple silicon. Signed and
-notarized. Hublot does not update itself: check the Releases page for new versions.
+notarized. Since version 0.2, Hublot updates itself: it checks daily for a new version, shows what
+changed, verifies its signature and installs it. If you have 0.1, install the latest version once by
+hand.
 
-**Privacy:** no analytics, no Hublot account. Optional integrations (Todoist, Vercel, Spotify,
-Open-Meteo weather) use your own tokens, kept in the Mac's Keychain, and only reach that service
-while you have them turned on.
+**Privacy:** no analytics, no Hublot account. Optional integrations, such as the Spotify queue, use
+your own access, kept in the Mac's Keychain, and only reach that service while you have them
+turned on.
