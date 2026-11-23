@@ -39,10 +39,10 @@ if [[ "$fork_gates" == "$EXPECTED_UPDATER_GATES" ]]; then
 else
     fail "$fork_gates fork gate(s), expected $EXPECTED_UPDATER_GATES: review the updater entry points"
 fi
-if [[ "$(count 'static var neverSelfUpdates: Bool { true }' Sources/Vorssaint/Fork/AppInfo+Fork.swift)" == 1 ]]; then
-    ok "neverSelfUpdates is unconditionally true"
+if [[ "$(count 'static var neverSelfUpdates: Bool { isDeveloperBuild || !isForkRelease || updateRepository.isEmpty }' Sources/Vorssaint/Fork/AppInfo+Fork.swift)" == 1 ]]; then
+    ok "neverSelfUpdates holds for the Developer build, a build not made for release, and without the fork's repository"
 else
-    fail "AppInfo.neverSelfUpdates is no longer unconditionally true"
+    fail "AppInfo.neverSelfUpdates no longer keeps the Developer build and a build without the fork's repository from updating"
 fi
 
 # --- 2. The identity pass is wired in and still sound -------------------------
@@ -147,6 +147,7 @@ for hook_site in \
     'ForkBootstrap.run()|Sources/Vorssaint/main.swift' \
     'ForkAttributionView()|Sources/Vorssaint/UI/Settings/SettingsView.swift' \
     'Link(l10n.s.viewOnGitHub, destination: AppInfo.forkRepositoryURL)  // Fork|Sources/Vorssaint/UI/Settings/SettingsView.swift' \
+    'private let repository = AppInfo.updateRepository  // Fork|Sources/Vorssaint/Services/Update/UpdateService.swift' \
     '].filter { AppInfo.showsUpstreamPromotion || $0.page != .support }),  // Fork|Sources/Vorssaint/UI/Settings/SettingsDirectory.swift' \
     'guard AppInfo.showsUpstreamPromotion, AppInfo.version == UpdateShowcaseInfo.releaseVersion else {  // Fork|Sources/Vorssaint/App/AppDelegate.swift' \
     'ForkCaptureExclusions.windowIDs(in: content, isReading: keepsIslandOut)|Sources/Vorssaint/Services/QuickTools/ScreenshotCaptureEngine.swift' \

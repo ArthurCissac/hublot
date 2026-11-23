@@ -54,6 +54,7 @@ IDENTITY_KEYS = {
     "FORK_SOURCE_URL": re.compile(r"https://[A-Za-z0-9./_-]+"),
 }
 OPTIONAL_IDENTITY_KEYS = {
+    "FORK_VERSION": re.compile(r"[0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z0-9.]+)?"),
     "FORK_TEAM_ID": re.compile(r"[A-Z0-9]{10}"),
 }
 

@@ -26,6 +26,11 @@ struct ForkAttributionView: View {
     var body: some View {
         let text = ForkStrings.current
         VStack(spacing: 5) {
+            if let base = AppInfo.forkBaseVersion {
+                Text(text.versionLine(AppInfo.name, AppInfo.version, Self.upstreamName, base))
+                    .font(.caption2.weight(.medium))
+                    .foregroundStyle(.secondary)
+            }
             Text(text.attribution(AppInfo.name, Self.upstreamName))
                 .font(.caption2)
                 .multilineTextAlignment(.center)

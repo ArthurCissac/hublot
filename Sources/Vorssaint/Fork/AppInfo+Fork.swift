@@ -8,15 +8,17 @@ import Foundation
 /// They live outside `Core/AppInfo.swift` so a rebase on upstream never
 /// conflicts here: upstream files only ever read these properties.
 extension AppInfo {
-    /// Always true in this fork: it is built locally from its own repository
-    /// and must never download or install an upstream release.
+    /// True for the Developer build, for a build not made by Fork/release.sh
+    /// (one installed from a work branch) and for a build that does not know
+    /// the fork's repository: those never download nor install anything.
     ///
-    /// Upstream's in-app updater fetches the official DMG, verifies it against
-    /// the official bundle id and team, then removes the running bundle when
-    /// its name differs. In a fork that would replace the fork with the
-    /// official app, so every updater entry point is gated on this property
-    /// instead of on `isDeveloperBuild`. `Fork/check.sh` counts those gates.
-    static var neverSelfUpdates: Bool { true }
+    /// Otherwise upstream's in-app updater runs against the fork's own releases
+    /// (`AppInfo.updateRepository`, from Fork/identity.sh). The identity pass
+    /// makes its installer require a DMG and an app signed by the fork's team
+    /// with the fork's bundle identifier, so an upstream release can never
+    /// replace the fork. Every updater entry point is gated on this property
+    /// instead of on `isDeveloperBuild`; `Fork/check.sh` counts those gates.
+    static var neverSelfUpdates: Bool { isDeveloperBuild || !isForkRelease || updateRepository.isEmpty }
 
     /// The fork's own repository (`Fork/identity.sh`, stamped into the
     /// Info.plist by the build), where « View on GitHub » leads.

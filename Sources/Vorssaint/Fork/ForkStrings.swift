@@ -14,6 +14,7 @@ struct ForkStrings {
     let attribution: (_ fork: String, _ upstream: String) -> String
     let forkSource: String
     let upstreamProject: (_ upstream: String) -> String
+    let versionLine: (_ fork: String, _ version: String, _ upstream: String, _ base: String) -> String
     let coexistenceTitle: (_ upstream: String) -> String
     let coexistenceMessage: (_ fork: String, _ upstream: String) -> String
     let quit: (_ app: String) -> String
@@ -167,6 +168,7 @@ struct ForkStrings {
         },
         forkSource: "Source of this fork",
         upstreamProject: { "\($0), the original project" },
+        versionLine: { "\($0) \($1), based on \($2) \($3)" },
         coexistenceTitle: { "\($0) is running too" },
         coexistenceMessage: { fork, upstream in
             "\(fork) and \(upstream) react to the same shortcuts and gestures, so each one would fire twice. "
@@ -318,6 +320,7 @@ struct ForkStrings {
         },
         forkSource: "Sources de ce fork",
         upstreamProject: { "\($0), le projet d’origine" },
+        versionLine: { "\($0) \($1), basé sur \($2) \($3)" },
         coexistenceTitle: { "\($0) est aussi lancé" },
         coexistenceMessage: { fork, upstream in
             "\(fork) et \(upstream) réagissent aux mêmes raccourcis et aux mêmes gestes : "

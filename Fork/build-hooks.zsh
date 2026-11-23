@@ -100,4 +100,20 @@ fork_test_sources() {
 fork_brand_bundle_resources() {
     python3 Fork/brand.py resources "$1"
     /usr/libexec/PlistBuddy -c "Add :ForkSourceURL string $FORK_SOURCE_URL" "$1/Contents/Info.plist"
+    # Hublot's own version, the upstream one it is based on kept beside it,
+    # and Hublot's changelog for What's New and the release notes page.
+    if [[ -n "${FORK_VERSION:-}" ]]; then
+        local base
+        base=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$1/Contents/Info.plist")
+        /usr/libexec/PlistBuddy -c "Add :ForkBaseVersion string $base" "$1/Contents/Info.plist"
+        /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $FORK_VERSION" "$1/Contents/Info.plist"
+        /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $FORK_VERSION" "$1/Contents/Info.plist"
+    fi
+    [[ -f Fork/CHANGELOG.md ]] && cp Fork/CHANGELOG.md "$1/Contents/Resources/CHANGELOG.md"
+    # Only a published build (Fork/release.sh) updates itself; one installed
+    # from a work branch never replaces itself with a public release.
+    if [[ "${HUBLOT_RELEASE:-0}" == "1" ]]; then
+        /usr/libexec/PlistBuddy -c "Add :ForkReleaseBuild bool true" "$1/Contents/Info.plist"
+    fi
+    return 0
 }

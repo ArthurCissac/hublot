@@ -33,5 +33,6 @@ enum ForkTests {
         ForkTrackpadSwitchTests.run(suite)
         ForkLyricsTests.run(suite)
         ForkSpotifyTests.run(suite)
+        ForkUpdateTests.run(suite)
     }
 }

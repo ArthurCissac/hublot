@@ -20,7 +20,9 @@ source Fork/identity.sh
 PROFILE="${HUBLOT_NOTARY_PROFILE:-hublot-notary}"
 APP="build/stage/$FORK_APP_NAME.app"
 
-[[ "${1:-}" == "--skip-build" ]] || ./build.sh
+[[ "${1:-}" == "--skip-build" ]] || HUBLOT_RELEASE=1 ./build.sh
+/usr/libexec/PlistBuddy -c 'Print :ForkReleaseBuild' "$APP/Contents/Info.plist" >/dev/null 2>&1 \
+    || { echo "✗ $APP was not built by this script (it would never update itself): run it without --skip-build" >&2; exit 1; }
 [[ -d "$APP" ]] || { echo "✗ $APP not found: run ./build.sh first" >&2; exit 1; }
 codesign --verify --deep --strict "$APP"
 
@@ -49,4 +51,19 @@ else
     echo "  xcrun notarytool store-credentials $PROFILE --apple-id <your Apple ID> --team-id $FORK_TEAM_ID"
 fi
 shasum -a 256 "$DMG"
-echo "✓ $DMG ($VERSION)"
+
+# The release's text: this version's section of Fork/CHANGELOG.md, the same
+# words the app shows in What's New.
+NOTES="dist/release-notes-$VERSION.md"
+awk -v v="$VERSION" '
+    index($0, "## [" v "]") == 1 { keep = 1; next }
+    keep && index($0, "## [") == 1 { exit }
+    keep && /^### Summary/ { next }
+    keep { print }
+' Fork/CHANGELOG.md | sed -e 's/^### Added$/### Nouveautés/' -e 's/^### Changed$/### Changements/' -e 's/^### Fixed$/### Corrections/' > "$NOTES"
+[[ -s "$NOTES" ]] || { echo "✗ No section [$VERSION] in Fork/CHANGELOG.md" >&2; exit 1; }
+echo "✓ $DMG ($VERSION), notes in $NOTES"
+PRE=""; [[ "$VERSION" == *-* ]] && PRE=" --prerelease"
+echo "Publish, once agreed:"
+echo "  ./Fork/publish.sh \"Hublot $VERSION\" && git push origin public:main"
+echo "  gh release create v$VERSION $DMG --repo ${FORK_SOURCE_URL#https://github.com/} --target main --title \"Hublot $VERSION\" --notes-file $NOTES$PRE"
