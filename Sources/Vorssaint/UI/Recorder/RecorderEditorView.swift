@@ -224,6 +224,7 @@ struct RecorderEditorView: View {
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
                     .fill(Color.black.opacity(0.72))
                 PlayerSurface(player: model.player)
+                ForkRecorderImageHandles(model: model, stage: proxy.size)  // Fork: pictures moved and resized by hand
                 if model.isAimingZoom {
                     // Aiming is a single click on the picture, and the overlay
                     // is what says so: the pointer becomes a crosshair and the
@@ -367,6 +368,8 @@ struct RecorderEditorView: View {
                         .frame(height: 32)
                 }
             }
+            ForkRecorderMicBoostRow(model: model)  // Fork: the microphone louder than 100 %
+            ForkRecorderMusicLane(model: model)  // Fork: the added music's lane
             timelineRow(strings.editorTitle) {
                 Filmstrip(model: model).frame(height: 54)
             }
@@ -431,6 +434,8 @@ struct RecorderEditorView: View {
             .screenshotSafeHelp(strings.addImageButton)
             .accessibilityLabel(strings.addImageButton)
             .foregroundStyle(Color(white: 0.8))
+
+            ForkRecorderMusicButton(model: model)  // Fork: add a piece of music
 
             Button {
                 model.addBlur(at: model.sourceTime)

@@ -158,6 +158,7 @@ struct SwitcherSettings: View {
                                       symbolName: "macwindow.on.rectangle") {
                     AppSwitcher.shared.syncWithPreferences()
                 }
+                ForkSwitcherGestureRow(switcherEnabled: switcherEnabled)  // Fork: three fingers on the trackpad
                 Text(l10n.s.switcherWindowShortcutCaption)
                     .font(.caption)
                     .foregroundStyle(.secondary)

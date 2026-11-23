@@ -629,7 +629,7 @@ enum SettingsDirectory {
                 SettingsDirectoryItem(page: .releaseNotes, title: s.tabReleaseNotes, icon: "sparkles"),
                 SettingsDirectoryItem(page: .support, title: s.tabSupport, icon: "heart.fill",
                                       keywords: [s.donateButton, s.supportIntroStarButton]),
-            ]),
+            ].filter { AppInfo.showsUpstreamPromotion || $0.page != .support }),  // Fork: no upstream donations
         ]
     }
 }

@@ -36,6 +36,7 @@ if NotchPresentationProbe.isRequested(by: CommandLine.arguments) {
 }
 #endif
 
+ForkBootstrap.run()  // Fork: see Sources/Vorssaint/Fork/ForkBootstrap.swift
 let app = NSApplication.shared
 let delegate = AppDelegate()
 delegate.configuredFeatureKeys = configuredFeatureKeys

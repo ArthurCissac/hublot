@@ -233,11 +233,11 @@ final class WindowLayoutService: ObservableObject {
     }
 
     @discardableResult
-    func apply(_ action: WindowLayoutAction) -> WindowLayoutResult {
+    func apply(_ action: WindowLayoutAction, window forkWindow: AXUIElement? = nil) -> WindowLayoutResult {  // Fork: or the window named
         guard AXIsProcessTrusted() else {
             return finish(.failure(.missingAccessibility))
         }
-        guard let target = focusedTarget(for: action) else {
+        guard let target = forkWindow.map({ forkTarget(for: $0, action: action) }) ?? focusedTarget(for: action) else {  // Fork
             return finish(.failure(.noWindow))
         }
         pruneWindowState(keeping: target.key)
@@ -3327,5 +3327,18 @@ private extension NSRect {
     var area: CGFloat {
         guard !isNull, !isEmpty else { return 0 }
         return width * height
+    }
+}
+
+// Fork: the window under the pointer, for the title bar gestures (Fork/ForkTitleBarGestures.swift).
+// Kept in this file because it reads the service's private window checks.
+extension WindowLayoutService {
+    fileprivate func forkTarget(for window: AXUIElement, action: WindowLayoutAction) -> WindowLayoutTarget? {
+        var pid: pid_t = 0
+        guard AXUIElementGetPid(window, &pid) == .success,
+              let app = NSRunningApplication(processIdentifier: pid), !app.isTerminated,
+              let onScreen = onScreenWindowIDs()
+        else { return nil }
+        return target(from: window, app: app, onScreenWindowIDs: onScreen, capability: action.targetCapability)
     }
 }

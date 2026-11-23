@@ -57,6 +57,7 @@ else
     APP_OPTIMIZATION_FLAGS=(-O)
     BUILD_CONFIGURATION="release"
 fi
+source Fork/build-hooks.zsh  # Fork: identity and build hooks, see FORK.md
 FAN_HELPER_ID="$APP_BUNDLE_ID.fan-control"
 # Now Playing is read through /usr/bin/perl loading this library; see
 # Sources/NowPlayingAdapter. Staged under Contents/Frameworks, signed on its own.
@@ -603,6 +604,7 @@ if (( TEST )); then
         Tests/*.swift
         build/generated-tests/*.swift
     )
+    fork_test_sources  # Fork: the fork's pure logic and its tests join the harness
     TEST_OUTPUT_FILE_MAP="$TEST_OBJECT_DIR/output-file-map.json"
     write_swift_output_file_map "$TEST_OUTPUT_FILE_MAP" "$TEST_OBJECT_DIR" "${TEST_SOURCES[@]}"
     echo "▸ Building & running tests against $(basename "$SDK")…"
@@ -624,6 +626,7 @@ fi
 
 echo "▸ Compiling ($BUILD_CONFIGURATION) against $(basename "$SDK")…"
 APP_SOURCES=(Sources/Vorssaint/**/*.swift)
+fork_brand_sources  # Fork: compile the renamed mirror instead, see Fork/brand.py
 if (( ! DEV )); then
     # A release starts from an empty build directory, so nothing an earlier
     # build left behind (an old icon catalog, a staged bundle) can reach it.
@@ -650,7 +653,7 @@ xcrun dyld_info -imports "build/$EXECUTABLE" | awk -f Tests/AudioTapImports.awk
 echo "▸ Compiling protected fan helper…"
 swiftc -O -target "$TARGET" -sdk "$SDK" "${SDK_COMPAT_FLAGS[@]}" "${BUILD_VARIANT_FLAGS[@]}" \
     Sources/Vorssaint/Services/FanControl/FanControlSupport.swift \
-    Sources/Vorssaint/Services/FanControl/FanControlXPC.swift \
+    "$FORK_APP_SRC/Services/FanControl/FanControlXPC.mirror.swift" \
     Sources/Vorssaint/Services/SystemMonitor/SMCClient.swift \
     Sources/Vorssaint/Services/Metrics/TemperatureSensorSelector.swift \
     Sources/Vorssaint/Services/FanControl/FanControlHardware.swift \
@@ -679,7 +682,7 @@ if [[ -z "$ACTOOL_BIN" ]]; then
 else
     echo "▸ Compiling adaptive icon catalog…"
     # actool crashes on File Provider-synced paths, so compile a local copy.
-    ditto "Resources/Brand/AppIcon.icon" "$ICON_TMP/AppIcon.icon"
+    ditto "${BRAND_DIR:-Resources/Brand}/AppIcon.icon" "$ICON_TMP/AppIcon.icon"  # Fork: its own artwork
     # Xcode 27 beta actool requires the --compile target directory to already exist.
     mkdir -p "$ICON_TMP/catalog"
     if "$ACTOOL_BIN" "$ICON_TMP/AppIcon.icon" \
@@ -718,7 +721,8 @@ cp CHANGELOG.md "$STAGE/Contents/Resources/CHANGELOG.md"
 for lproj in Resources/*.lproj(N); do
     cp -R "$lproj" "$STAGE/Contents/Resources/"
 done
-if (( DEV )); then
+fork_brand_bundle_resources "$STAGE"  # Fork: rename the bundle's visible texts
+if (( DEV )) || [[ "$APP_BUNDLE_ID" != "com.vorssaint.utils" ]]; then  # Fork: every variant has its own identity
     # A distinct identity so the Developer build installs and runs next to the
     # official app, with its own permissions, preferences and login item.
     /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier $APP_BUNDLE_ID" "$STAGE/Contents/Info.plist"

@@ -84,7 +84,7 @@ enum ScreenshotScrollingCapture {
                 displayID: region.displayID, pixelRect: region.pixelRect,
                 includePointer: includePointer, hideVorssaintWindows: hideVorssaintWindows,
                 protectedWindowIDs: protectedWindowIDs),
-                  let firstFrame = await source.image(),
+                  let firstFrame = ForkScrollingDirection.first(await source.image()),  // Fork: horizontal captures
                   await autoScroll?.isCurrent() != false,
                   let first = contentFrame(firstFrame)
             else { return Task.isCancelled ? .cancelled : .failed }
@@ -144,7 +144,7 @@ enum ScreenshotScrollingCapture {
                     continue
                 }
 
-                guard let frame = await source.image(),
+                guard let frame = ForkScrollingDirection.oriented(await source.image()),  // Fork: horizontal captures
                       await autoScroll?.isCurrent() != false,
                       let current = contentFrame(frame),
                       let currentSample = sample(current)
@@ -335,7 +335,7 @@ enum ScreenshotScrollingCapture {
                                   result: CompletedResult) -> Result {
         guard !Task.isCancelled else { return .cancelled }
         let completedSlices = footerSlice.map { slices + [$0] } ?? slices
-        guard let image = stitch(completedSlices) else {
+        guard let image = ForkScrollingDirection.restored(stitch(completedSlices)) else {  // Fork: turned back
             return Task.isCancelled ? .cancelled : .failed
         }
         guard !Task.isCancelled else { return .cancelled }

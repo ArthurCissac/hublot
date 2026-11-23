@@ -1867,6 +1867,7 @@ final class ScreenshotEditorController: NSObject, NSWindowDelegate {
     // MARK: NSWindowDelegate
 
     func windowShouldClose(_ sender: NSWindow) -> Bool {
+        if ForkPreviewCards.isEnabled() { return true }  // Fork: the edits go back to the card, nothing is lost
         guard model.isDirty else { return true }
         let alert = NSAlert()
         alert.messageText = strings.discardTitle
@@ -1893,5 +1894,6 @@ final class ScreenshotEditorController: NSObject, NSWindowDelegate {
         window?.delegate = nil
         window = nil
         ScreenshotService.shared.editorDidClose(self)
+        ForkPreviewCards.editorDidClose(self)  // Fork: the edited picture goes back to the card preview
     }
 }

@@ -448,10 +448,12 @@ struct NotchSettings: View {
             if lyricsEnabled, AppFeature.notchLyrics.isAvailable {
                 switchRow("globe", music.online, caption: music.onlineHint, isOn: $lyricsOnline)
                     .padding(.leading, settingsRowTextInset)
+                if lyricsOnline { ForkLyricsSettingsRow() }
             }
             switchRow("photo", music.browserCovers, caption: music.browserCoversHint, isOn: $browserCovers)
             SettingsFeatureSwitchRow(symbol: "list.bullet", title: music.enableQueue, caption: music.queueDescription,
                                      isOn: $queueEnabled, feature: .notchQueue)
+            if queueEnabled, AppFeature.notchQueue.isAvailable { ForkSpotifyQueueSettingsRows() }
             SettingsFeatureSwitchRow(symbol: "waveform", title: music.liveEqualizer,
                                      caption: NotchAudioLevelSupport.isSupported ? music.liveEqualizerHint : music.liveEqualizerUnavailable,
                                      isOn: $liveEqualizer, feature: .notchLiveEqualizer, enabled: NotchAudioLevelSupport.isSupported)

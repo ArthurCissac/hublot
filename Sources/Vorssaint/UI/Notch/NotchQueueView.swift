@@ -48,6 +48,7 @@ struct NotchQueueView: View {
                 .notchScrollEdgeFade()
             } else if !service.queueLoading {
                 NotchEmptyView(symbol: "list.bullet", message: service.upcoming == nil ? text.queueUnavailable : text.queueEmpty) {
+                    ForkSpotifyConnectButton(playback: playback)  // Fork
                     NotchPillButton(title: text.openPlayer, prominent: true) { RadialNowPlayingApplication.open(playback.track) }
                 }
             }

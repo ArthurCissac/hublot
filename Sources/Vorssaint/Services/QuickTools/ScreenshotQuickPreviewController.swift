@@ -84,6 +84,8 @@ final class ScreenshotQuickPreviewController {
 
     func show(inNotch: Bool = true) {
         guard panel == nil, !shownInNotch, !closed else { return }
+        // Fork: the card-style preview takes the capture over, with this preview's own actions.
+        if ForkPreviewCards.present(capture, strings: strings, disabled: model.disabledActions, perform: action) { return }
         let wantsNotch = inNotch && NotchSupport.routes(.capture)
             && NotchService.shared.acceptsSystemFeedback
         let presentationPolicy = ScreenshotSupport.confirmationPreviewPresentationPolicy(

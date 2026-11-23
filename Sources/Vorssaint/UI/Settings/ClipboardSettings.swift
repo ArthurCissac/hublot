@@ -62,6 +62,7 @@ struct ClipboardSettings: View {
                 .settingsFormSectionAnchor(.clipboardHistory)
 
                 clipboardShortcutSection
+                ForkClipboardSettingsSection()  // Fork: the Paste-style shelf
                 clipboardMenuBarPreviewSection
 
                 Section {

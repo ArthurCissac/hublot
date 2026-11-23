@@ -26,6 +26,8 @@ struct RecorderImageOverlay: Codable, Equatable, Identifiable, RecorderTimelineB
     /// How solid the picture is at its most solid, before the ends are eased.
     /// The picture's own transparency is kept underneath it.
     var opacity: Double
+    var forkCenter: CGPoint? = nil  // Fork: where it was dragged to, in the frame's 0...1 space; nil keeps the anchor
+    var forkTurn: ForkRecorderImageTurn? = nil  // Fork: mirrored and rotated by hand; nil draws it upright
 
     init(id: UUID = UUID(),
          path: String,
@@ -45,7 +47,7 @@ struct RecorderImageOverlay: Codable, Equatable, Identifiable, RecorderTimelineB
 
     var duration: Double { max(0, end - start) }
 
-    static let sizeRange: ClosedRange<Double> = 0.04...0.6
+    static let sizeRange: ClosedRange<Double> = 0.04...ForkRecorderImagePlacement.largestSize  // Fork: upstream stops at 0.6
     static let opacityRange: ClosedRange<Double> = 0.05...1
     static let defaultSize: Double = 0.18
     static let fade: Double = 0.25

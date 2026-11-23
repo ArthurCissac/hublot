@@ -2280,3 +2280,35 @@ struct SwitcherGrid: Equatable {
                             panelSize: CGSize(width: width, height: height))
     }
 }
+
+// Fork: sessions opened by three fingers on the trackpad (Fork/ForkTrackpadSwitcher.swift).
+// Kept in this file because they drive the switcher's private session, as its shortcut does.
+extension AppSwitcher {
+    /// Opens a session as the apps shortcut would, without a key. False when none can open now.
+    func forkBeginGestureSession(scope: SwitcherSessionScope, reversed: Bool) -> Bool {
+        guard lifecycleLock.withLock({ tap != nil && !shouldStopTapThread }) else { return false }
+        let generation = routeLock.withLock { () -> UInt64? in
+            guard !routeSessionActive, routePendingSessionStart == nil else { return nil }
+            sessionStartGeneration &+= 1
+            routePendingSessionStart = SwitcherPendingSessionStart(generation: sessionStartGeneration,
+                                                                   shortcut: routeShortcut, scope: scope, reversed: reversed)
+            return sessionStartGeneration
+        }
+        guard let generation else { return false }
+        beginPendingSession(generation: generation)
+        return true
+    }
+
+    func forkStep(_ delta: Int) {
+        guard sessionActive else { return }
+        advanceSelection(by: delta)
+    }
+
+    func forkCommit() {
+        if sessionActive { commitSession() }
+    }
+
+    func forkCancel() {
+        if sessionActive { cancelSession() } else { routeLock.withLock { routePendingSessionStart = nil } }
+    }
+}

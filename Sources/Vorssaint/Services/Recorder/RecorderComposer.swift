@@ -132,10 +132,11 @@ final class RecorderComposer {
                   let sprite = plan.imageSprites[order] else { continue }
             let opacity = plan.imageOpacity[order][index]
             guard opacity > 0.01 else { continue }
+            guard !ForkRecorderImageVisibility.isHidden(overlay.id) else { continue }  // Fork: held on the stage
             let size = CGSize(width: sprite.width, height: sprite.height)
-            let origin = overlay.anchor.origin(of: size, in: plan.canvasSize)
+            let origin = ForkRecorderImagePlacement.origin(of: overlay, drawn: size, in: plan.canvasSize)  // Fork: free placement
             result = faded(CIImage(cgImage: sprite), opacity: opacity)
-                .transformed(by: CGAffineTransform(translationX: origin.x, y: origin.y))
+                .transformed(by: ForkRecorderImageTurn.transform(overlay.forkTurn, size: size, origin: origin))  // Fork: mirror and rotation
                 .composited(over: result)
         }
         return result

@@ -275,7 +275,7 @@ final class RecorderMicrophoneCapture: NSObject,
 
     private func configureIfNeeded() -> Bool {
         if configured { return true }
-        guard let device = AVCaptureDevice.default(for: .audio),
+        guard let device = ForkRecorderDevices.captureMicrophone() ?? AVCaptureDevice.default(for: .audio),  // Fork: the chosen microphone
               let input = try? AVCaptureDeviceInput(device: device)
         else { return false }
 

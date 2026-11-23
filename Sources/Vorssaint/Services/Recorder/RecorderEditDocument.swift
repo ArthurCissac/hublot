@@ -49,6 +49,8 @@ struct RecorderEditDocument: Codable, Equatable {
     var texts: [RecorderTextOverlay]
     /// Pictures laid over the recording, in the recording's own time.
     var images: [RecorderImageOverlay]
+    var forkMusic: ForkRecorderMusic.Track? = nil  // Fork: a piece of music added in the editor
+    var forkMicrophoneBoost: Double? = nil  // Fork: the microphone made louder than 100 %
     /// Parts of the picture kept unreadable, in the recording's own time.
     var blurs: [RecorderBlurRegion]
     var keepsMicrophone: Bool
@@ -69,7 +71,7 @@ struct RecorderEditDocument: Codable, Equatable {
          showsPointer: Bool = true,
          pointerSmoothing: String = RecorderMotion.Smoothing.smooth.rawValue,
          pointerSize: Double = 1,
-         showsClickRing: Bool = true,
+         showsClickRing: Bool = ForkRecorderOptions.showsClicks(),  // Fork: the recording bar's clicks option
          zoomEnabled: Bool = true,
          zoomAmount: Double = 1.8,
          zoomsOnTyping: Bool = false,
@@ -144,6 +146,8 @@ struct RecorderEditDocument: Codable, Equatable {
         zoomsGenerated = try container.decodeIfPresent(Bool.self, forKey: .zoomsGenerated) ?? false
         texts = try container.decodeIfPresent([RecorderTextOverlay].self, forKey: .texts) ?? []
         images = try container.decodeIfPresent([RecorderImageOverlay].self, forKey: .images) ?? []
+        forkMusic = try container.decodeIfPresent(ForkRecorderMusic.Track.self, forKey: .forkMusic)  // Fork
+        forkMicrophoneBoost = try container.decodeIfPresent(Double.self, forKey: .forkMicrophoneBoost)  // Fork
         blurs = try container.decodeIfPresent([RecorderBlurRegion].self, forKey: .blurs) ?? []
         keepsMicrophone = try container.decodeIfPresent(Bool.self, forKey: .keepsMicrophone) ?? true
         systemAudioGain = try container.decodeIfPresent(Double.self, forKey: .systemAudioGain) ?? 1
@@ -320,6 +324,7 @@ struct RecorderEditDocument: Codable, Equatable {
     /// redrawn. Export speed deliberately does not change preview timing.
     func affectsTiming(_ other: RecorderEditDocument) -> Bool {
         cuts != other.cuts || trimStart != other.trimStart || trimEnd != other.trimEnd
+            || forkMusic?.path != other.forkMusic?.path  // Fork: music added, removed or replaced
     }
 
     func affectsAudio(_ other: RecorderEditDocument) -> Bool {
@@ -327,6 +332,8 @@ struct RecorderEditDocument: Codable, Equatable {
             || keepsMicrophone != other.keepsMicrophone
             || systemAudioGain != other.systemAudioGain
             || microphoneGain != other.microphoneGain
+            || forkMusic?.gain != other.forkMusic?.gain  // Fork: the music's volume
+            || forkMicrophoneBoost != other.forkMicrophoneBoost  // Fork: the microphone's boost
     }
 
     /// True once the person has actually changed something worth warning about

@@ -193,7 +193,7 @@ final class RecorderExporter {
         // The trim and the cuts become one continuous asset first, so the
         // reader never has to know that a piece was taken out of the middle.
         let ranges = document.keptRanges(duration: duration)
-        let keepsAnyAudio = document.keepsSystemAudio || document.keepsMicrophone
+        let keepsAnyAudio = document.keepsSystemAudio || document.keepsMicrophone || ForkRecorderMusic.isPresent(in: document)  // Fork: music alone is a sound to export
         guard let result = await RecorderComposition.build(from: asset,
                                                            ranges: ranges,
                                                            includesAudio: keepsAnyAudio,
@@ -201,6 +201,7 @@ final class RecorderExporter {
               let timelineVideo = try? await result.asset.loadTracks(withMediaType: .video).first
         else { return .readFailed }
         let timeline = result.asset
+        await ForkRecorderMusic.add(to: timeline, document: document, duration: result.duration)  // Fork: the added music
         let timelineDuration = (try? await timeline.load(.duration)) ?? .zero
         let audioTracks = (try? await timeline.loadTracks(withMediaType: .audio)) ?? []
 
@@ -279,9 +280,10 @@ final class RecorderExporter {
                     AVLinearPCMIsFloatKey: true,
                     AVLinearPCMIsNonInterleaved: false,
                     AVLinearPCMIsBigEndianKey: false,
-                ])
+                ].merging(ForkRecorderOptions.exportReaderSettings()) { _, fork in fork })  // Fork: read in mono on request
             output.audioMix = RecorderComposition.audioMix(trackIDs: result.audioTrackIDs,
                                                            document: document)
+            output.audioMix = ForkRecorderMusic.mixing(output.audioMix, in: timeline, document: document)  // Fork
             if document.exportTiming.speed != 1 {
                 // Decode scaled audio edits at their new duration while
                 // preserving speech pitch, rather than relabeling PCM times.
@@ -325,7 +327,7 @@ final class RecorderExporter {
             let input = AVAssetWriterInput(mediaType: .audio, outputSettings: [
                 AVFormatIDKey: kAudioFormatMPEG4AAC,
                 AVSampleRateKey: 48_000,
-                AVNumberOfChannelsKey: 2,
+                AVNumberOfChannelsKey: ForkRecorderOptions.exportChannelCount(),  // Fork: and written the same way
                 AVEncoderBitRateKey: sharingPlan?.audioBitRate ?? 160_000,
             ])
             input.expectsMediaDataInRealTime = false

@@ -142,6 +142,7 @@ final class RecorderEditorModel: ObservableObject, BackdropEditing {
             self.loadAudioWaveforms(audioTracks)
             self.document = self.document.sanitized(duration: self.duration)
             self.generateZoomsIfNeeded()
+            ForkRecorderKeyCapture.addCaptions(to: self)  // Fork: keys pressed while recording, as captions
             self.loadThumbnails()
             self.rebuildComposition()
         }
@@ -161,10 +162,12 @@ final class RecorderEditorModel: ObservableObject, BackdropEditing {
                                                                includesAudio: true),
                   let self, !Task.isCancelled
             else { return }
+            await ForkRecorderMusic.add(to: result.asset, document: self.document, duration: result.duration)  // Fork: the added music
             let item = AVPlayerItem(asset: result.asset)
             self.audioTrackIDs = result.audioTrackIDs
             item.audioMix = RecorderComposition.audioMix(trackIDs: result.audioTrackIDs,
                                                          document: self.document)
+            item.audioMix = ForkRecorderMusic.mixing(item.audioMix, in: result.asset, document: self.document)  // Fork
             self.player.replaceCurrentItem(with: item)
             self.player.isMuted = false
             self.outputDuration = CMTimeGetSeconds(result.duration)
@@ -349,6 +352,7 @@ final class RecorderEditorModel: ObservableObject, BackdropEditing {
     private func applyAudioMix() {
         player.currentItem?.audioMix = RecorderComposition.audioMix(trackIDs: audioTrackIDs,
                                                                     document: document)
+        player.currentItem?.audioMix = ForkRecorderMusic.mixing(player.currentItem?.audioMix, in: player.currentItem?.asset, document: document)  // Fork
     }
 
     private func documentDidChange(from previous: RecorderEditDocument) {
@@ -413,6 +417,7 @@ final class RecorderEditorModel: ObservableObject, BackdropEditing {
                 outputSize: composer.canvasSize)
             guard !Task.isCancelled else { return }
             item.videoComposition = composition
+            ForkRecorderImageDrag.previewRebuilt(self.player)  // Fork: the video takes a held picture back, and redraws
         }
     }
 

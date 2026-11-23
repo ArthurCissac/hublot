@@ -85,6 +85,7 @@ enum RecorderComposition {
             }
             parameters.setVolume(kept ? Float(RecorderSupport.sanitizedAudioGain(gain)) : 0,
                                  at: .zero)
+            ForkRecorderAudioBoost.apply(to: parameters, source: source, document: document)  // Fork: microphone above 100 %
             return parameters
         }
         return mix

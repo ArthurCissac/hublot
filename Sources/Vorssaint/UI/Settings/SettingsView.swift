@@ -785,11 +785,12 @@ struct AboutSettings: View {
                 Button(l10n.s.reviewHighlights) {
                     appDelegate()?.showUpdateHighlights(isReview: true)
                 }
-                Link(l10n.s.viewOnGitHub, destination: AppInfo.repositoryURL)
+                Link(l10n.s.viewOnGitHub, destination: AppInfo.forkRepositoryURL)  // Fork: the fork's own repository
             }
             Text(AppInfo.copyright)
                 .font(.caption2)
                 .foregroundStyle(.tertiary)
+            ForkAttributionView()  // Fork: unofficial-fork notice and source link
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 20)

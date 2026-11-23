@@ -59,6 +59,8 @@ struct WindowLayoutSettings: View {
                 }
             }
 
+            ForkSwishSettings()  // Fork: Swish's settings, first on the page
+
             // The green button override has no page of its own; it lives here
             // with the other window behaviors and keeps this page reachable
             // when it is the only one of the two still switched on in the hub.

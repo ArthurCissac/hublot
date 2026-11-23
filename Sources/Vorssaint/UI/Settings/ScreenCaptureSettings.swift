@@ -12,6 +12,7 @@ struct ScreenCaptureSettings: View {
     @ObservedObject private var router = SettingsRouter.shared
     @ObservedObject private var features = FeatureRuntime.shared
     @State private var selectedTool = ScreenCaptureTool.screenshot
+    @State private var forkShowsAll = false  // Fork: upstream's full page waits behind "All settings"
 
     private var strings: ScreenshotFeatureStrings {
         FeatureStrings.screenshot(l10n.language)
@@ -27,6 +28,8 @@ struct ScreenCaptureSettings: View {
 
     var body: some View {
         Form {
+            ForkCaptureSettingsPage(showsAll: $forkShowsAll)  // Fork: the short page comes first
+            if forkShowsAll {  // Fork
             if !availableTools.isEmpty {
                 Section {
                     if availableTools.count > 1 {
@@ -46,6 +49,7 @@ struct ScreenCaptureSettings: View {
             }
 
             selectedSettings
+            }  // Fork
         }
         .formStyle(.grouped)
         .onAppear { reconcileSelection(withDestination: true) }

@@ -155,6 +155,7 @@ struct ShelfSettings: View {
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
+                    ForkDragTopGuardRow()  // Fork: no Mission Control while dragging to the top
                 }
 
                 Section(l10n.s.shelfExclusionsTitle) {

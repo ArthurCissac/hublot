@@ -111,6 +111,8 @@ private final class ScreenshotPinWindow: OverlayPanel {
 
         let view = PinContentView(image: image, window: self)
         contentView = view
+        ForkPinControls.install(in: view, image: image, scale: scale,  // Fork: buttons on a pinned capture
+                                save: { [weak self] in self?.saveImage() }, close: { [weak self] in self?.closePin() })
     }
 
     override var canBecomeKey: Bool { true }

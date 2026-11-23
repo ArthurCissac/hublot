@@ -145,6 +145,7 @@ enum ScreenshotCaptureEngine {
             ownWindowIDs: ownWindowIDs,
             protectedWindowIDs: protectedWindowIDs,
             islandWindowIDs: islandIDs)
+            .union(ForkCaptureExclusions.windowIDs(in: content, isReading: keepsIslandOut))  // Fork: desktop icons
         return content.windows.filter { excludedIDs.contains($0.windowID) }
     }
 

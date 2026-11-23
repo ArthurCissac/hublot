@@ -738,6 +738,7 @@ final class ScreenshotSelectionController {
                 self.finish(.failed)
                 return
             }
+            ForkWindowCaptureStyle.markWindowCapture()  // Fork: the screenshot tool adds its shadow or background
             self.finish(.captured(Capture(
                 image: capture.image,
                 scale: capture.scale,
@@ -1407,7 +1408,7 @@ private final class ScreenshotOverlayView: NSView {
     }
 
     func refreshGuideVisibility() {
-        guard screenCaptureOptions?.controlsInNotch != true, let panel else {
+        guard screenCaptureOptions?.controlsInNotch != true, !ForkCaptureSelectionGuide.isHidden, let panel else {  // Fork: no hint bar under the capture menu
             guideHost.isHidden = true
             return
         }

@@ -168,10 +168,11 @@ final class NotchLyricsService: ObservableObject {
             let found = result.data.map { NotchLyricsSupport.searchCandidates($0, for: track,
                                                         verifiedArtistAliases: verifiedArtistAliases) } ?? []
             let knownRecording = result.data.map { NotchLyricsSupport.containsCatalogRecording($0, for: track) } ?? false
+            let nearby = ForkLyricsNearbyDuration.candidates(result.data, strictFound: !found.isEmpty, for: track, verifiedArtistAliases: verifiedArtistAliases)  // Fork
             DispatchQueue.main.async {
                 guard let self, self.acceptsResult(for: track, generation: requested) else { return }
                 self.session = nil
-                let accumulated = candidates + found
+                let accumulated = candidates + found + nearby  // Fork: nearby lengths rank last
                 if !result.canSearch {
                     self.finish(NotchLyricsSupport.bestLyrics(in: accumulated), for: track, failed: true)
                 } else {

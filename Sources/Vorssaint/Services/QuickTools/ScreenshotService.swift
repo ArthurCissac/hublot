@@ -58,6 +58,7 @@ final class ScreenshotService: ObservableObject {
         var ids = ScreenCaptureService.shared.protectedWindowIDs
         if NotchSupport.isEnabled() { ids.formUnion(NotchService.shared.protectedWindowIDs) }
         ids.formUnion(preview?.protectedWindowIDs ?? [])
+        ids.formUnion(ForkPreviewCards.shared.windowIDs)  // Fork: card previews stay out of captures
         if let number = QuickToolHUD.currentWindowNumber, number > 0 {
             ids.insert(CGWindowID(number))
         }
@@ -242,7 +243,7 @@ final class ScreenshotService: ObservableObject {
     }
 
     func receiveUnifiedCapture(_ capture: ScreenshotSelectionController.Capture) {
-        route(capture)
+        route(ForkWindowCaptureStyler.styledIfWindow(capture))  // Fork: window shadow or background
     }
 
     func receiveUnifiedScrollingRegion(_ region: RecorderSupport.Region) {
@@ -377,6 +378,7 @@ final class ScreenshotService: ObservableObject {
     /// exists to reach for.
     private func route(_ capture: ScreenshotSelectionController.Capture) {
         beginLatestCapture(capture)
+        ForkCaptureSound.play()  // Fork: the capture sound
         // The island's companion blinks hard, as a flash, if it is there to see.
         NotchService.shared.reactMascot(.flash, patience: 1)
         preview?.close()

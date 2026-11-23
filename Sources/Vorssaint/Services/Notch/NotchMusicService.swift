@@ -516,6 +516,7 @@ final class NotchMusicService: ObservableObject {
             queueLoading = false
             queueReply = reply
             updateQueue()
+            forkReadSpotifyQueue(after: reply, request: request)  // Fork
         }
     }
 
@@ -747,6 +748,23 @@ private final class NotchMusicPipeReader {
                 self.buffer.removeSubrange(...end)
                 self.receive(line)
             }
+        }
+    }
+}
+
+// Fork: Spotify shares no queue with macOS; the fork reads it through Spotify's
+// Web API (Fork/ForkSpotifyQueueBridge.swift) and hands upstream the same reply.
+extension NotchMusicService {
+    fileprivate func forkReadSpotifyQueue(after reply: [String: Any], request: UUID) {
+        guard ForkSpotify.needsQueue(reply, request: request, playback: playback),
+              ForkSpotifyQueueBridge.shared.isReady, let playback else { return }
+        queueLoading = true
+        ForkSpotifyQueueBridge.shared.load(request: request, playback: playback) { [weak self] read in
+            guard let self, self.queueVisible, self.queueRequest == request else { return }
+            self.queueLoading = false
+            guard let read else { return }
+            self.queueReply = read
+            self.updateQueue()
         }
     }
 }

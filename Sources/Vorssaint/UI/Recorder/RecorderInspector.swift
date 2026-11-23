@@ -473,7 +473,7 @@ struct RecorderInspector: View {
                     .font(.system(size: 11))
                     .foregroundStyle(Color(white: 0.72))
                 anchorGrid(selected: overlay.anchor) { anchor in
-                    model.updateSelectedImage { $0.anchor = anchor }
+                    model.updateSelectedImage { $0.anchor = anchor; $0.forkCenter = nil }  // Fork: a place of the grid lets go of the free one
                 }
             }
 

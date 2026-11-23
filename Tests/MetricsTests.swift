@@ -10,6 +10,7 @@ struct MetricsTests {
     static func main() {
         let suite = TestSuite()
         let groups: [(String, () -> Void)] = [
+            ("fork", { ForkTests.run(suite) }),  // Fork: the fork's own suites, in Fork/Tests
             ("harness", {
                 TestHarnessTests.run(suite)
                 PreferenceNamespaceTests.run(suite)

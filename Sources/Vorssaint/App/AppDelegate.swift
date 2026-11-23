@@ -2495,7 +2495,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
     }
 
     private func showUpdateShowcaseIntroIfNeeded() -> Bool {
-        guard AppInfo.version == UpdateShowcaseInfo.releaseVersion else {
+        guard AppInfo.showsUpstreamPromotion, AppInfo.version == UpdateShowcaseInfo.releaseVersion else {  // Fork
             UpdateShowcaseInfo.cleanupCache()
             return false
         }

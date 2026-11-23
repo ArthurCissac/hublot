@@ -1,0 +1,32 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./build.sh:*)",
+      "Bash(./build/VorssaintDeveloper:*)",
+      "Bash(./build/HublotDeveloper:*)",
+      "Bash(./build/Hublot:*)",
+      "Bash(./Fork/check.sh:*)",
+      "Bash(python3 Fork/brand.py:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git branch:*)",
+      "Bash(git checkout:*)",
+      "Bash(git switch:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git fetch:*)"
+    ],
+    "deny": [
+      "Bash(git push:*)",
+      "Bash(gh pr create:*)",
+      "Bash(gh release:*)",
+      "Bash(otool:*)",
+      "Bash(objdump:*)",
+      "Bash(class-dump:*)",
+      "Bash(hopper:*)",
+      "Bash(ghidra:*)",
+      "Bash(analyzeHeadless:*)"
+    ]
+  }
+}
