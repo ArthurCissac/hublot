@@ -545,7 +545,7 @@ struct NotchSettings: View {
         case .watch:
             NotchWatchSettingsControls()
                 .toggleStyle(TrailingSwitchToggleStyle())
-        case .mixer, .system, .tools:
+        case .mixer, .system, .tools, .ambient, .tasks, .weather:  // Fork
             EmptyView()
         }
     }
@@ -641,6 +641,7 @@ struct NotchSettings: View {
                                available: true, reservesReason: reserves)
                 }
                 if accessoriesEnabled { Text(FeatureStrings.notchActivities(l10n.language).accessoryDescription).font(.caption).foregroundStyle(.secondary) }
+                ForkRoundStepSettingsRows(volume: volume && volumeAvailable, brightness: brightness && brightnessAvailable)  // Fork
                 if enabled, (volume || brightness || keyboardLight), !permissions.accessibility { PermissionRow(kind: .accessibility) }
             }
             let locked = FeatureStrings.notchLockScreen(l10n.language)
@@ -739,6 +740,10 @@ struct NotchSettings: View {
                 destination(text.captures, symbol: "camera.viewfinder", value: $captureControls)
                 destination(FeatureStrings.scratchpad(l10n.language).pageTitle, symbol: "note.text", value: $scratchpad, available: AppFeature.scratchpad.isAvailable)
             }
+            ForkTodoistSettingsSection()  // Fork: Todoist tasks
+            ForkVercelSettingsSection()  // Fork: Vercel deployments
+            ForkWeatherSettingsSection()  // Fork: the Weather page
+            ForkTranslateSettingsSection()  // Fork: translation of the selection
             SettingsCard(title: editor.privacy) {
                 switchRow("camera.viewfinder", text.showInCaptures, isOn: $showInCaptures)
             }
@@ -872,6 +877,7 @@ struct NotchSettings: View {
     private func moduleFeature(_ module: NotchModule) -> AppFeature? {
         switch module {
         case .controls, .music, .captures, .system: return nil
+        case .ambient, .tasks, .weather: return nil  // Fork: their own switches
         case .mixer: return .mixer
         case .clipboard: return .clipboardHistory
         case .files: return .shelf

@@ -27,6 +27,11 @@ enum ForkScrollingDirection {
         armedAt = nil
     }
 
+    /// Whether the capture about to start will go sideways, before its first frame.
+    static func isArmedHorizontal(at date: Date = Date()) -> Bool {
+        armedAt.map { date.timeIntervalSince($0) >= 0 && date.timeIntervalSince($0) <= armLifetime } ?? false
+    }
+
     /// The first frame of a capture: the direction is decided here, for the whole capture.
     static func first(_ image: CGImage?, at date: Date = Date()) -> CGImage? {
         let age = armedAt.map { date.timeIntervalSince($0) }

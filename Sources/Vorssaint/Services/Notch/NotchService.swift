@@ -507,7 +507,7 @@ final class NotchService: ObservableObject {
     var mascotAtRest: Bool { mascotOn && idleContent == .none && !mascotInBar && !mascotTucked }
 
     /// The face it keeps at rest: wide awake while Keep Awake holds the Mac up.
-    var mascotRestingMood: NotchMascotMood { KeepAwakeManager.shared.isActive ? .alert : .idle }
+    var mascotRestingMood: NotchMascotMood { ForkMascotLife.restingMood(base: KeepAwakeManager.shared.isActive ? .alert : .idle) }  // Fork
 
     /// Whether the closed island on `geometry` draws the companion: resting,
     /// or strolling through, where its wings fit beside the camera. A capsule
@@ -567,6 +567,9 @@ final class NotchService: ObservableObject {
         NotchSupport.compactActivities(timer: hasTimerActivity, watch: hasWatchActivity, downloads: hasDownloadActivity,
                                       agents: hasAgentActivity, calendar: hasCalendarActivity,
                                       music: hasMusicActivity, keepAwake: hasKeepAwakeActivity)
+            + (ForkVercelLogic.islandActivityShown() ? [.deploys] : [])  // Fork: a build, before sound and tasks
+            + (ForkAmbientLogic.islandActivityShown() ? [.ambient] : [])  // Fork
+            + (ForkTodoistLogic.islandActivityShown() ? [.tasks] : [])  // Fork: the next task
     }
 
     var showsCompactActivityPicker: Bool {
@@ -692,6 +695,9 @@ final class NotchService: ObservableObject {
                                                     paired: companion != nil)
         // Its reading is a countdown like the timer's, so it takes the timer's wings.
         case .keepAwake: return geometry.compactTimerGeometry(showsDownloads: false, wing: keepAwakeStripWing(in: geometry))
+        case .ambient: return geometry.compactTimerGeometry(showsDownloads: false, wing: ForkAmbientLogic.islandStripWing(geometry))  // Fork
+        case .tasks: return geometry.compactCalendarGeometry(wing: ForkTodoistLogic.islandStripWing(geometry))  // Fork
+        case .deploys: return geometry.compactCalendarGeometry(wing: ForkVercelLogic.islandStripWing(geometry))  // Fork
         default: return geometry
         }
     }
@@ -1112,6 +1118,9 @@ final class NotchService: ObservableObject {
                 NotchKeepAwakeSupport.compactText(until: $0, now: Date(), locale: Locale(identifier: language.rawValue))
             }
             return layout.keepAwakeSurface(reading: reading, geometry: geometry)
+        case .ambient: return layout.keepAwakeSurface(reading: ForkAmbientLogic.islandReading(language), geometry: geometry)  // Fork
+        case .tasks: return layout.keepAwakeSurface(reading: ForkTodoistLogic.islandReading(), geometry: geometry)  // Fork
+        case .deploys: return layout.keepAwakeSurface(reading: ForkVercelLogic.islandReading(), geometry: geometry)  // Fork
         }
     }
 
@@ -1925,6 +1934,8 @@ final class NotchService: ObservableObject {
             case .calendar: select(.calendar)
             case .commandBar: perform { CommandBarService.shared.show() }
             case .scratchpad: openScratchpad()
+            case .ambient: ForkAmbientPlayer.shared.toggle()  // Fork
+            case .tasks: perform { ForkTodoistPanel.shared.show() }  // Fork
             case .volume, .brightness, .keyboardLight: select(.controls)
             }
         }
@@ -2396,6 +2407,8 @@ final class NotchService: ObservableObject {
             }
             return
         }
+        if ForkTodoistLogic.isReminder(symbol: selectedNotice.symbol) { open(.tasks); if expanded { dismissNotice() }; return }  // Fork
+        if ForkVercelLogic.isNotice(symbol: selectedNotice.symbol) { ForkVercelLogic.openFinished(); dismissNotice(); return }  // Fork
         open(selectedNotice.event == .download ? .downloads : selectedNotice.event == .timer ? .timer
              : selectedNotice.event == .accessory ? .system : selectedNotice.event == .systemNotification ? .notifications
              : selectedNotice.event == .clipboard ? .clipboard : selectedNotice.event == .agents ? .agents

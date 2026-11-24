@@ -21,6 +21,7 @@ struct NotchMascotSettings: View {
     @AppStorage(DefaultsKey.notchMascotStyle) private var style = NotchMascotStyle.minimal.rawValue
     @AppStorage(DefaultsKey.notchMascotShape) private var shape = NotchMascotShape.ball.rawValue
     @AppStorage(DefaultsKey.notchMascotPalette) private var palette = NotchMascotPalette.pearl.rawValue
+    @AppStorage(DefaultsKey.forkMascotVariant) private var forkVariant = "classic"  // Fork: more styles
     @AppStorage(DefaultsKey.notchMascotSide) private var side = NotchMascotSide.left.rawValue
     @AppStorage(DefaultsKey.notchMascotVisitFrequency) private var frequency = NotchMascotVisitFrequency.normal.rawValue
     @AppStorage(DefaultsKey.notchCommandBar) private var commandBar = true
@@ -128,7 +129,8 @@ struct NotchMascotSettings: View {
                 }
             }
             .padding(.leading, settingsRowTextInset)
-            if look.style == .minimal {
+            ForkMascotVariantPicker(look: look)  // Fork: more styles
+            if look.style == .minimal, ForkMascotVariantLogic.variant(forkVariant).keepsShape {  // Fork: the ghost and the blob have their own
                 SettingsRow(symbol: "circle.square", title: text.shape) {
                     Text(text.shape(look.shape)).foregroundStyle(.secondary)
                 }
@@ -220,6 +222,7 @@ struct NotchMascotSettings: View {
                 .transition(.opacity)
             }
             switchRow("theatermasks", text.reactions, caption: text.reactionsHint, isOn: $reactions)
+            ForkMascotSettingsRows()  // Fork: a livelier companion
         }
         .animation(animation, value: visits)
     }

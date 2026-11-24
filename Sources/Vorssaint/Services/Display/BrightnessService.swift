@@ -1771,7 +1771,7 @@ final class BrightnessService: ObservableObject {
                             to displayID: CGDirectDisplayID,
                             method: BrightnessDisplay.Method,
                             showOSD: Bool) {
-        let stepped = BrightnessSupport.steppedBrightness(current, delta: delta)
+        let stepped = ForkRoundSteps.brightness(current, delta: delta) ?? BrightnessSupport.steppedBrightness(current, delta: delta)  // Fork: key step
         Self.log.log("key step display \(displayID) route \(String(describing: method), privacy: .public) \(current) to \(stepped)")
         setBrightness(stepped, for: displayID, showOSD: showOSD, smooth: true)
     }
@@ -1893,7 +1893,7 @@ final class BrightnessService: ObservableObject {
                 for: displayID,
                 fallback: displays.first(where: { $0.id == displayID })?.brightness
             ) {
-                let stepped = BrightnessSupport.steppedBrightness(current, delta: delta)
+                let stepped = ForkRoundSteps.brightness(current, delta: delta) ?? BrightnessSupport.steppedBrightness(current, delta: delta)  // Fork: system route
                 Self.log.log("key step display \(displayID) route system \(current) to \(stepped)")
                 setBrightness(stepped, for: displayID, showOSD: showsOverlay, smooth: true)
             }

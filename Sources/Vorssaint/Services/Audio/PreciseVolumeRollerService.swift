@@ -313,7 +313,7 @@ final class PreciseVolumeRollerService: ObservableObject {
             } else if mixer.systemOutputVolume != nil {
                 let direction = key == .volumeUp ? 1 : -1
                 mixer.requestOutputStep(level: {
-                    NotchSupport.volumeLevel(current: $0, direction: direction, fine: fine)
+                    ForkRoundSteps.volumeLevel(current: $0, direction: direction, fine: fine) ?? NotchSupport.volumeLevel(current: $0, direction: direction, fine: fine)  // Fork
                 }, completion: { result in
                     completion(result)
                     if result == .applied { NotchService.shared.showCurrentVolume() }

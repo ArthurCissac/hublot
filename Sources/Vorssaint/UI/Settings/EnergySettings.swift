@@ -287,6 +287,7 @@ struct EnergySettings: View {
                         .labelsHidden()
                 }
                 .padding(.leading, settingsRowTextInset)
+                ForkLidDisplaySleepRow().padding(.leading, settingsRowTextInset)  // Fork
             }
         }
     }

@@ -38,10 +38,71 @@ enum ForkLyricsNearbyDuration {
                            defaults: UserDefaults = .standard) -> [NotchLyricsSupport.Candidate] {
         guard !strictFound, let data, isEnabled(in: defaults),
               let sameAlbum = recordsOnAlbum(data, of: track) else { return [] }
-        return NotchLyricsSupport.searchCandidates(sameAlbum, for: track, durationTolerance: tolerance,
+        // A record a few seconds longer often runs on past the song's end:
+        // its lines past the end go, so the rest stays in time.
+        let near = NotchLyricsSupport.searchCandidates(trimmed(sameAlbum, to: track.duration), for: track,
+                                                       durationTolerance: tolerance,
+                                                       verifiedArtistAliases: verifiedArtistAliases)
+        if !near.isEmpty { return near.map { lowered($0, by: penalty) } }
+        // Nothing within eight seconds: the nearest record of the album gives
+        // its words, without timings that belong to another length.
+        guard let plain = nearestPlain(sameAlbum, of: track) else { return [] }
+        return NotchLyricsSupport.searchCandidates(plain, for: track, durationTolerance: tolerance,
                                                    verifiedArtistAliases: verifiedArtistAliases)
-            .map { NotchLyricsSupport.Candidate(lyrics: $0.lyrics, score: $0.score - penalty, distance: $0.distance,
-                                                recordID: $0.recordID, stableKey: $0.stableKey) }
+            .map { lowered($0, by: 2 * penalty) }
+    }
+
+    private static func lowered(_ candidate: NotchLyricsSupport.Candidate, by amount: Int) -> NotchLyricsSupport.Candidate {
+        NotchLyricsSupport.Candidate(lyrics: candidate.lyrics, score: candidate.score - amount, distance: candidate.distance,
+                                     recordID: candidate.recordID, stableKey: candidate.stableKey)
+    }
+
+    /// The records with their timed lines past `duration` left out; tags and
+    /// untimed lines stay. Upstream refuses every timed line of a record whose
+    /// last one runs past the song, which left a record six seconds longer
+    /// as plain text although the rest of its lines were in time.
+    static func trimmed(_ data: Data, to duration: Double) -> Data {
+        guard duration > 0, let records = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] else { return data }
+        let kept = records.map { record -> [String: Any] in
+            guard let synced = record["syncedLyrics"] as? String, !synced.isEmpty else { return record }
+            var copy = record
+            copy["syncedLyrics"] = synced.split(separator: "\n", omittingEmptySubsequences: false)
+                .filter { line in lineTime(line).map { $0 <= duration } ?? true }
+                .joined(separator: "\n")
+            return copy
+        }
+        return (try? JSONSerialization.data(withJSONObject: kept)) ?? data
+    }
+
+    /// The time of a line such as « [01:29.01] Yeah », in seconds; nil for a
+    /// tag such as « [ar:Josman] » or a line without a time.
+    static func lineTime<Line: StringProtocol>(_ line: Line) -> Double? {
+        guard line.first == "[", let close = line.firstIndex(of: "]") else { return nil }
+        let stamp = line[line.index(after: line.startIndex)..<close].split(separator: ":")
+        guard stamp.count == 2, let minutes = Double(stamp[0]), let seconds = Double(stamp[1]),
+              minutes >= 0, seconds >= 0 else { return nil }
+        return minutes * 60 + seconds
+    }
+
+    /// Beyond this many seconds off, a record is taken for another recording.
+    static let plainReach: Double = 60
+
+    /// The album's record nearest in length that has plain words, its
+    /// synchronized lines dropped and its length set to the song's, so
+    /// upstream's matcher shows it as plain text. Nil when none is near.
+    static func nearestPlain(_ data: Data, of track: NotchMusicIdentity) -> Data? {
+        guard let records = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] else { return nil }
+        func gap(_ record: [String: Any]) -> Double? {
+            (record["duration"] as? Double).map { abs($0 - track.duration) }
+        }
+        let usable = records.filter { record in
+            let words = (record["plainLyrics"] as? String ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+            return !words.isEmpty && (gap(record).map { $0 <= plainReach } ?? false)
+        }
+        guard var nearest = usable.min(by: { (gap($0) ?? .infinity) < (gap($1) ?? .infinity) }) else { return nil }
+        nearest["syncedLyrics"] = ""
+        nearest["duration"] = track.duration
+        return try? JSONSerialization.data(withJSONObject: [nearest])
     }
 
     /// The reply's records on the player's album, re-encoded for upstream's

@@ -150,7 +150,9 @@ struct NetworkSection: View {
                         PanelInlineHideButton(isVisible: $netApps)
                     }
                 }
-                if appRows.isEmpty {
+                if appRows.isEmpty, ForkPanelLook.showsLoadingRows(loading: appRowsLoading) {
+                    ForkPanelLoadingRows()  // Fork: no « Measuring… »
+                } else if appRows.isEmpty {
                     Text(appRowsLoading ? l10n.s.breakdownMeasuring : l10n.s.networkAppsIdle)
                         .font(.system(size: 10.5))
                         .foregroundStyle(.tertiary)
@@ -232,7 +234,7 @@ struct NetworkSection: View {
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(color)
             VStack(alignment: .leading, spacing: 1) {
-                Text(value.map { MetricFormat.networkRate($0, inBits: speedInBits) } ?? l10n.s.networkMeasuring)
+                ForkPanelValueText(text: value.map { MetricFormat.networkRate($0, inBits: speedInBits) }, fallback: l10n.s.networkMeasuring, width: 56)  // Fork
                     .font(.system(size: 13.5, weight: .semibold, design: .rounded))
                     .monospacedDigit()
                     .contentTransition(.numericText())

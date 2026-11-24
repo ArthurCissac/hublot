@@ -17,9 +17,9 @@ struct QuickTogglesSection: View {
                      collapsible: collapsible,
                      supportsEditing: true,
                      resetAction: QuickTogglesList.resetPanelDefaults) { editing in
-            QuickTogglesList(editing: editing, draggingItem: $draggingItem) {
+            ForkQuickActionsGrid(editing: editing) { QuickTogglesList(editing: editing, draggingItem: $draggingItem) {  // Fork: tiles
                 appDelegate()?.closePopover()
-            }
+            } }  // Fork: end of ForkQuickActionsGrid
             // Actions here activate other apps (the Finder restarting, System
             // Events, the Trash confirmation), which would dismiss the panel
             // mid-flow; holding it open keeps a toggle-back one click away.

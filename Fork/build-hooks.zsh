@@ -110,6 +110,11 @@ fork_brand_bundle_resources() {
         /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $FORK_VERSION" "$1/Contents/Info.plist"
     fi
     [[ -f Fork/CHANGELOG.md ]] && cp Fork/CHANGELOG.md "$1/Contents/Resources/CHANGELOG.md"
+    # The Care window's pictures (lot 9j), made for Hublot.
+    if [[ -d Fork/Resources/Care ]]; then
+        mkdir -p "$1/Contents/Resources/ForkCare"
+        cp Fork/Resources/Care/*.jpg "$1/Contents/Resources/ForkCare/"
+    fi
     # Only a published build (Fork/release.sh) updates itself; one installed
     # from a work branch never replaces itself with a public release.
     if [[ "${HUBLOT_RELEASE:-0}" == "1" ]]; then

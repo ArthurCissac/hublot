@@ -257,6 +257,12 @@ final class ForkSpotifyHTTP: NSObject, URLSessionDataDelegate {
         start(URLRequest(url: url), maximumBytes: maximumBytes, completion: completion)
     }
 
+    /// Any prepared request, for the fork's other services (Todoist), with
+    /// the same limits: ephemeral, bounded, no cookie, no redirect.
+    static func send(_ request: URLRequest, maximumBytes: Int, completion: @escaping (Int?, Data?) -> Void) -> URLSession {
+        start(request, maximumBytes: maximumBytes, completion: completion)
+    }
+
     private static func start(_ request: URLRequest, maximumBytes: Int,
                               completion: @escaping (Int?, Data?) -> Void) -> URLSession {
         let configuration = URLSessionConfiguration.ephemeral

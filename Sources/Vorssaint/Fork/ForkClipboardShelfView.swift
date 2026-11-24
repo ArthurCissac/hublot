@@ -269,8 +269,13 @@ struct ForkClipboardShelfView: View {
                                               selected: entry.id == model.selectionID, text: text,
                                               board: store.boards.board(of: entry.id), glass: usesGlass)
                                 .id(entry.id)
-                                .gesture(TapGesture(count: 2).onEnded { perform(.paste, entry) }
-                                    .exclusively(before: TapGesture().onEnded { model.selectionID = entry.id }))
+                                // A click copies the card and closes the shelf at once. No
+                                // double-click on top of it: telling the two apart made every
+                                // click wait a third of a second.
+                                .onTapGesture {
+                                    model.selectionID = entry.id
+                                    perform(.copy, entry)
+                                }
                                 .contextMenu { menu(for: entry) }
                                 // Dragged out, the card carries its content to another app, or to a tab.
                                 .onDrag { ForkClipboardDrag.begin(entry) }

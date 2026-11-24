@@ -2861,6 +2861,7 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
                 WhatsAppDownloadOrganizer.shared.undoLastRun(transactionID: transactionID)
             }
         }
+        ForkNotifications.handle(response)  // Fork: a scan's results and threats open their window
         completionHandler()
     }
 }

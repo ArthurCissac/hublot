@@ -260,7 +260,7 @@ struct PanelSection<Content: View>: View {
                 }
                 .buttonStyle(.plain)
             } else {
-                sectionTitle(title)
+                ForkSectionTitle { sectionTitle(title) }  // Fork: the tab's pill names it
                 Spacer(minLength: 0)
             }
             if supportsEditing {

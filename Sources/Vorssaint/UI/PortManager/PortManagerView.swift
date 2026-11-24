@@ -37,6 +37,7 @@ struct PortManagerView: View {
             }
             .padding(9).background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 9))
             .padding(.horizontal, 14).padding(.bottom, 8)
+            ForkLocalQRToggle().padding(.horizontal, 14).padding(.bottom, 8)  // Fork: QR code button toggle
             Divider()
             if service.refreshFailed {
                 Label(strings.loadFailed, systemImage: "exclamationmark.triangle")
@@ -123,6 +124,7 @@ struct PortManagerView: View {
                     .truncationMode(.middle)
             }
             Spacer(minLength: 4)
+            ForkPortQRButton(entry: entry)  // Fork: QR code to open on a phone
             if AppFeature.killProcess.isAvailable {
                 HStack(spacing: 4) {
                     Button(strings.kill) { force = false; pending = entry }
@@ -160,6 +162,7 @@ struct PortManagerRowActions: View {
                 if !NSWorkspace.shared.open(url) { NSSound.beep() }
             }
         }
+        ForkPortQRMenuItem(entry: entry)  // Fork: QR code to open on a phone
     }
 
     private func copy(_ value: String) {

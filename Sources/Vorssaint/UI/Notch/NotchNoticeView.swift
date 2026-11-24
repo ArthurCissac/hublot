@@ -14,6 +14,7 @@ struct NotchNoticeView: View {
 
     private var wings: NotchNoticeWings { notice.wings(in: geometry) }
     private var tint: Color {
+        if let fork = ForkVercelNotice.tint(for: notice.symbol) { return fork }  // Fork: green or red
         switch notice.event {
         // A warning reads as one in any agent's color; other AI notices wear it.
         case .agents: return notice.symbol.hasPrefix("exclamationmark") ? .orange : notice.agent?.tint ?? .white

@@ -5,18 +5,20 @@ import CoreGraphics
 
 /// The capture menu: its shortcut opens a selection; the area drawn is kept on
 /// screen, framed, with a bar under it, and the bar's buttons decide what is
-/// done with that area. Scrolling captures and recordings each open a short
-/// bar of their own first, with their options and a start button.
+/// done with that area. A recording opens a short bar of its own first, with
+/// its options and a start button; a scrolling capture starts as soon as its
+/// area is drawn, its window clicked, or Return takes the whole display.
 ///
 /// The proportions were measured on the reference app's all-in-one bar (see
 /// docs/reference/cleanshot-x.md); the drawing and the wording are the fork's.
 /// Pure geometry and choices, so the harness can pin them down.
 enum ForkCaptureMenuLayout {
     /// Everything a bar can show: the main bar's seven items, then the items
-    /// of the scrolling bar and of the recording bar, which share `back`.
+    /// of the recording bar. A scrolling capture has no bar of its own: it
+    /// draws its area, or takes the window clicked or the whole display, and
+    /// starts at once, its controls on its own strip (ForkScrollingControls).
     enum Mode: CaseIterable {
         case area, fullScreen, window, scrolling, timer, text, recording
-        case startScrolling, direction, autoScroll
         case record, microphone, systemAudio, mono, clicks, keys, camera, cameraShape, countdown, back
         /// What a recording films: the area drawn, a window, or the whole display.
         case scopeArea, scopeWindow, scopeScreen
@@ -26,7 +28,7 @@ enum ForkCaptureMenuLayout {
         var tool: ScreenCaptureTool {
             switch self {
             case .area, .fullScreen, .window, .timer: return .screenshot
-            case .scrolling, .startScrolling, .direction, .autoScroll: return .scrolling
+            case .scrolling: return .scrolling
             case .text: return .text
             case .recording, .record, .microphone, .systemAudio, .mono, .clicks, .keys, .camera, .cameraShape,
                  .countdown, .back, .scopeArea, .scopeWindow, .scopeScreen:
@@ -37,7 +39,7 @@ enum ForkCaptureMenuLayout {
         /// A setting rather than an action: a click changes it and the bar stays.
         var isSetting: Bool {
             switch self {
-            case .direction, .autoScroll, .timer, .microphone, .systemAudio, .mono, .clicks, .keys, .camera, .cameraShape,
+            case .timer, .microphone, .systemAudio, .mono, .clicks, .keys, .camera, .cameraShape,
                  .countdown, .scopeArea, .scopeWindow, .scopeScreen:
                 return true
             default: return false
@@ -47,7 +49,7 @@ enum ForkCaptureMenuLayout {
         /// Needs an area on screen to act on.
         var needsArea: Bool {
             switch self {
-            case .area, .scrolling, .text, .recording, .startScrolling, .record: return true
+            case .area, .text, .recording, .record: return true
             default: return false
             }
         }
@@ -55,7 +57,7 @@ enum ForkCaptureMenuLayout {
         /// A thin rule sets these apart from what comes before them.
         var followsDivider: Bool {
             switch self {
-            case .text, .recording, .direction, .scopeArea, .microphone, .back: return true
+            case .text, .recording, .scopeArea, .microphone, .back: return true
             default: return false
             }
         }
@@ -175,10 +177,6 @@ enum ForkCaptureMenuLayout {
             }
         }
     }
-
-    /// The scrolling bar: start, the direction, automatic scrolling. Scrolling
-    /// is done by hand unless automatic scrolling, vertical only, is switched on here.
-    static let scrollingModes: [Mode] = [.startScrolling, .direction, .autoScroll, .back]
 
     /// The recording bar: start, what is filmed (area, window, whole display),
     /// the two sound sources, mono, the click rings, the keys, the camera and

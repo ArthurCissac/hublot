@@ -107,6 +107,7 @@ enum ScreenshotScrollingCapture {
             var scrollPending = false
             var finishRequestedAt: TimeInterval?
             var automatic = AutoScrollState()
+            ForkScrollingPreviewFeed.send(slices)  // Fork: live preview, first picture
             await onProgress(totalHeight)
 
             while true {
@@ -262,6 +263,7 @@ enum ScreenshotScrollingCapture {
                     retainedPixels += stripPixels
                     previousSample = currentSample
                     hasUnmatchedContent = false
+                    ForkScrollingPreviewFeed.send(slices)  // Fork: live preview, each strip
                     await onProgress(totalHeight)
 
                 case .advanced(_, .backward, _):

@@ -3,11 +3,11 @@
 
 import AppKit
 
-/// Opens upstream's window switcher with three fingers swiped sideways on
-/// the trackpad, steps through it as the fingers travel, and picks the window
-/// when they lift. No event tap: the trackpad's frames are read from
-/// MultitouchSupport, which only reports and never holds an event, and only
-/// while the setting is on and macOS leaves three-finger swipes free.
+/// Opens upstream's window switcher with three or four fingers (as set) swiped
+/// sideways on the trackpad, steps through it as the fingers travel, and picks
+/// the window when they lift. No event tap: the trackpad's frames are read
+/// from MultitouchSupport, which only reports and never holds an event, and
+/// only while the setting is on and macOS leaves that swipe free.
 final class ForkTrackpadSwitcher {
     static let shared = ForkTrackpadSwitcher()
 
@@ -31,9 +31,15 @@ final class ForkTrackpadSwitcher {
         })
     }
 
-    /// macOS's own three-finger sideways swipe, on the built-in and on a Bluetooth trackpad.
-    static var systemUsesThreeFingerSwipe: Bool {
-        let key = "TrackpadThreeFingerHorizSwipeGesture"
+    /// How many fingers the gesture takes, as set: 3 or 4.
+    static var fingers: Int {
+        UserDefaults.standard.integer(forKey: DefaultsKey.forkSwitcherTrackpadFingers) == 3 ? 3 : 4
+    }
+
+    /// Whether macOS takes the sideways swipe with this many fingers itself,
+    /// on the built-in and on a Bluetooth trackpad.
+    static func systemUsesSwipe(fingers: Int) -> Bool {
+        let key = ForkTrackpadSwitchRecognizer.systemSettingKey(fingers: fingers)
         let values = ["com.apple.AppleMultitouchTrackpad", "com.apple.driver.AppleBluetoothMultitouch.trackpad"].map {
             UserDefaults(suiteName: $0)?.object(forKey: key) as? Int
         }
@@ -45,10 +51,13 @@ final class ForkTrackpadSwitcher {
         return defaults.bool(forKey: DefaultsKey.forkSwitcherTrackpadGesture)
             && defaults.bool(forKey: DefaultsKey.switcherEnabled)
             && AppFeature.switcher.isAvailable && AXIsProcessTrusted()
-            && !Self.systemUsesThreeFingerSwipe
+            && !Self.systemUsesSwipe(fingers: Self.fingers)
     }
 
     func sync() {
+        // A change in the number of fingers starts the recognizer afresh.
+        let fingers = Self.fingers
+        lock.withLock { if recognizer.fingers != fingers { recognizer = ForkTrackpadSwitchRecognizer(fingers: fingers) } }
         if wanted { startDevices() } else { stopDevices() }
     }
 
@@ -68,7 +77,8 @@ final class ForkTrackpadSwitcher {
             ForkMultitouch.unregister(device, forkTrackpadSwitchCallback)
         }
         devices.removeAll()
-        lock.withLock { recognizer = ForkTrackpadSwitchRecognizer() }
+        let fingers = Self.fingers
+        lock.withLock { recognizer = ForkTrackpadSwitchRecognizer(fingers: fingers) }
     }
 
     /// From MultitouchSupport's own thread: only arithmetic here, the switcher is driven on the main thread.

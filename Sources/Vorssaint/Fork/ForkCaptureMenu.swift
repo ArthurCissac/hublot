@@ -11,9 +11,10 @@ import SwiftUI
 /// it to be adjusted first. An area drawn otherwise stays on screen, framed,
 /// with the bar under it, and the bar's buttons decide what is done with it
 /// (a picture, a scrolling capture, its text, a recording) or change a
-/// setting first. A scrolling capture and a recording each open a short bar of
-/// their own, with their options and a start button; a recording films an
-/// area, a window or the whole display.
+/// setting first. A scrolling capture starts as soon as its area is drawn, its
+/// window clicked, or Return takes the whole display; a recording opens a short
+/// bar of its own, with its options and a start button, and films an area, a
+/// window or the whole display.
 ///
 /// The selection is upstream's own surface, run here in its "where" mode, and
 /// each action hands the area to the entry point upstream's tools already
@@ -126,6 +127,7 @@ final class ForkCaptureMenu: ObservableObject {
         }
         armed = nil
         audio = RecorderSelectionAudioOptions()
+        model.delay = 0  // each opening starts without a timer
         refreshMicrophones()
         readSettings()
         model.modes = modes
@@ -229,6 +231,14 @@ final class ForkCaptureMenu: ObservableObject {
             run(.area, on: region)
             return
         }
+        // A scrolling capture runs on what was picked: the area drawn, the
+        // window clicked, or the whole display, which Return gives.
+        if armed == .scrolling {
+            armed = nil
+            remember(region)
+            run(.scrolling, on: region)
+            return
+        }
         area = region
         if let screen = NSScreen.screens.first(where: { $0.displayID == region.displayID }) {
             screenFrame = screen.frame
@@ -275,16 +285,10 @@ final class ForkCaptureMenu: ObservableObject {
         guard isOpen else { return }
         let defaults = UserDefaults.standard
         switch mode {
-        case .autoScroll:
-            defaults.set(!model.autoScroll, forKey: DefaultsKey.screenshotScrollingAutoScroll)
-            // Automatic scrolling only goes up and down.
-            if !model.autoScroll { defaults.set(false, forKey: DefaultsKey.forkScrollingHorizontal) }
-        case .direction:
-            defaults.set(!model.horizontal, forKey: DefaultsKey.forkScrollingHorizontal)
-            if !model.horizontal { defaults.set(false, forKey: DefaultsKey.screenshotScrollingAutoScroll) }
         case .timer:
-            defaults.set(ForkCaptureMenuLayout.nextDelay(after: model.delay, allowed: ScreenshotSupport.allowedDelays),
-                         forKey: DefaultsKey.screenshotDelay)
+            // The menu's own timer, for the capture taken from it only: written to
+            // the shared delay, it made ⇧⌘3 and ⇧⌘4 count down too, then select again.
+            model.delay = ForkCaptureMenuLayout.nextDelay(after: model.delay, allowed: ScreenshotSupport.allowedDelays)
         case .microphone:
             // One step per click: the Mac's microphone, each other one, then off.
             let next = ForkRecorderMicrophone.next(
@@ -346,12 +350,11 @@ final class ForkCaptureMenu: ObservableObject {
             beginSelection()
             moveBar(to: ForkCaptureMenuLayout.barFrame(modes: model.modes, in: screenFrame))
         case .scrolling:
-            // Options of its own: its bar comes first, with a start button.
-            guard area != nil else {
-                arm(mode)
-                return
-            }
-            showModes(ForkCaptureMenuLayout.scrollingModes, active: nil)
+            // No bar of its own and nothing kept from before, not even a framed
+            // area: a selection at once, and the capture starts on what it gives.
+            dropArea()
+            arm(mode)
+            moveBar(to: ForkCaptureMenuLayout.barFrame(modes: model.modes, in: screenFrame))
         case .recording:
             // Its bar comes first, with what is filmed, the options and the
             // start button; what is filmed decides what has to be drawn.
@@ -389,7 +392,7 @@ final class ForkCaptureMenu: ObservableObject {
                 model.active = .area
                 beginSelection()
             }
-        case .text, .startScrolling:
+        case .text:
             guard let area else {
                 arm(mode)
                 return
@@ -463,8 +466,6 @@ final class ForkCaptureMenu: ObservableObject {
         guard let area else { return }
         if model.modes == ForkCaptureMenuLayout.recordingModes {
             choose(.record)
-        } else if model.modes == ForkCaptureMenuLayout.scrollingModes {
-            choose(.startScrolling)
         } else {
             run(.area, on: area)
         }
@@ -558,10 +559,10 @@ final class ForkCaptureMenu: ObservableObject {
         // Once this click has finished and the menu has left the screen.
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.06) {
             switch mode {
-            case .startScrolling:
+            case .scrolling:
                 // Armed just before: the capture takes the direction at its first frame.
                 if horizontal { ForkScrollingDirection.armHorizontal() } else { ForkScrollingDirection.disarm() }
-                // Scrolled by hand, or by upstream when automatic scrolling is on.
+                // Scrolled by hand, or by the pointer once its auto-scroll is on (ForkScrollingControls).
                 ScreenshotService.shared.receiveUnifiedScrollingRegion(region)
             case .record:
                 ScreenRecorderService.shared.record(region, audioOptions: audio)
@@ -622,8 +623,6 @@ final class ForkCaptureMenu: ObservableObject {
 
     private func readSettings() {
         let defaults = UserDefaults.standard
-        model.delay = ScreenshotSupport.sanitizedDelay(defaults.integer(forKey: DefaultsKey.screenshotDelay))
-        model.autoScroll = defaults.bool(forKey: DefaultsKey.screenshotScrollingAutoScroll)
         model.horizontal = defaults.bool(forKey: DefaultsKey.forkScrollingHorizontal)
         model.countdown = max(0, defaults.integer(forKey: DefaultsKey.recorderCountdown))
         model.microphone = audio.microphone
@@ -756,7 +755,6 @@ final class ForkCaptureMenuModel: ObservableObject {
     @Published var active: ForkCaptureMenuLayout.Mode?
     /// Seconds before a picture is taken; 0 is no delay.
     @Published var delay = 0
-    @Published var autoScroll = false
     @Published var microphone = false
     @Published var systemAudio = false
     @Published var mono = false
@@ -831,10 +829,7 @@ struct ForkCaptureMenuView: View {
     private func color(for mode: Mode, isActive: Bool) -> Color {
         switch mode {
         case .record: return Color(red: 1, green: 0.27, blue: 0.23)
-        case .startScrolling: return Color(red: 0.3, green: 0.85, blue: 0.4)
         case .timer: return model.delay > 0 ? .orange : plain(mode, isActive)
-        case .autoScroll: return model.autoScroll ? .orange : plain(mode, isActive)
-        case .direction: return model.horizontal ? .orange : plain(mode, isActive)
         case .countdown: return model.countdown > 0 ? .orange : plain(mode, isActive)
         case .microphone: return model.microphone ? .white : Color.white.opacity(0.45)
         case .systemAudio: return model.systemAudio ? .white : Color.white.opacity(0.45)
@@ -864,9 +859,6 @@ struct ForkCaptureMenuView: View {
         case .fullScreen: return "display"
         case .window: return "macwindow"
         case .scrolling: return "arrow.down.to.line"
-        case .startScrolling: return "play.fill"
-        case .autoScroll: return "arrow.down.circle"
-        case .direction: return model.horizontal ? "arrow.left.and.right" : "arrow.up.and.down"
         case .timer, .countdown: return "timer"
         case .text: return "text.viewfinder"
         case .recording: return "video"
@@ -897,9 +889,6 @@ struct ForkCaptureMenuView: View {
         case .fullScreen: return text.captureMenuFullScreen
         case .window: return text.captureMenuWindow
         case .scrolling: return text.captureMenuScrolling
-        case .startScrolling: return text.captureMenuStart
-        case .autoScroll: return text.captureMenuAuto
-        case .direction: return model.horizontal ? text.captureMenuHorizontal : text.captureMenuVertical
         case .timer: return model.delay > 0 ? text.captureMenuSeconds(model.delay) : text.captureMenuTimer
         case .text: return text.captureMenuText
         case .recording: return text.captureMenuRecording

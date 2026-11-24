@@ -148,6 +148,7 @@ struct CommandBarSettings: View {
                     }
                     .disabled(source.isAlwaysOn)
                 }
+                ForkCurrencySettingsRows()  // Fork: currencies beside the calculator
             } header: {
                 Text(text.sourcesTitle)
             } footer: {

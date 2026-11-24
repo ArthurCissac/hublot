@@ -48,6 +48,9 @@ enum ForkScrollingTests {
         // Armed by the capture menu, decided at the first frame.
         let now = Date(timeIntervalSince1970: 9_000)
         Direction.armHorizontal(at: now)
+        suite.expect(Direction.isArmedHorizontal(at: now.addingTimeInterval(0.2))
+            && !Direction.isArmedHorizontal(at: now.addingTimeInterval(Direction.armLifetime + 1)),
+            "the controls know a capture will go sideways before its first frame")
         _ = Direction.first(image, at: now.addingTimeInterval(0.5))
         suite.expect(Direction.isHorizontal, "a capture started just after being armed goes sideways")
         suite.expect(Direction.oriented(image)?.width == height && Direction.restored(turned)?.width == width,

@@ -184,6 +184,7 @@ struct PanelPortManagerView: View {
                     .truncationMode(.middle)
             }
             Spacer(minLength: 4)
+            ForkPortQRButton(entry: entry)  // Fork: QR code to open on a phone
             if AppFeature.killProcess.isAvailable {
                 HStack(spacing: 4) {
                     Button(strings.kill) { confirmTermination(entry, force: false) }

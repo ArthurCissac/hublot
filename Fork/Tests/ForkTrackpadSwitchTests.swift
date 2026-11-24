@@ -52,5 +52,30 @@ enum ForkTrackpadSwitchTests {
                "while macOS uses three fingers to move between full-screen apps, the gesture is left to it")
         suite.expect(Defaults.registeredDefaults[DefaultsKey.forkSwitcherTrackpadGesture] as? Bool == false,
                "the trackpad switcher is off until chosen")
+
+        // Four fingers, for a Mac that keeps three for its full-screen apps.
+        var four = Recognizer(fingers: 4)
+        var fourOutputs: [Recognizer.Output] = []
+        fourOutputs += four.feed(fingers: 3, center: (0.3, 0.5))
+        fourOutputs += four.feed(fingers: 3, center: (0.5, 0.5))
+        fourOutputs += four.feed(fingers: 0, center: nil)
+        suite.expect(fourOutputs.isEmpty, "set to four fingers, a three-finger swipe opens nothing")
+        fourOutputs += four.feed(fingers: 4, center: (0.3, 0.5))
+        fourOutputs += four.feed(fingers: 4, center: (0.4, 0.5))
+        fourOutputs += four.feed(fingers: 0, center: nil)
+        suite.expect(fourOutputs.first == .begin(reversed: false) && fourOutputs.last == .commit,
+               "four fingers sideways open the switcher, and lifting them picks")
+        suite.expect(Recognizer(fingers: 7).fingers == 3 && Recognizer(fingers: 4).fingers == 4,
+               "only three or four fingers")
+        suite.expect(Recognizer.systemSettingKey(fingers: 4) == "TrackpadFourFingerHorizSwipeGesture"
+            && Recognizer.systemSettingKey(fingers: 3) == "TrackpadThreeFingerHorizSwipeGesture",
+               "each finger count is checked against its own trackpad setting")
+        suite.expect(Defaults.registeredDefaults[DefaultsKey.forkSwitcherTrackpadFingers] as? Int == 4
+            && SettingsBackupSupport.exportKeys().contains(DefaultsKey.forkSwitcherTrackpadFingers),
+               "four fingers by default, carried in backups")
+        suite.expect(ForkPreviewCardGestures.hideShortcut.storageValue != ForkPreviewCardGestures.reopenShortcut.storageValue
+            && Defaults.registeredDefaults[DefaultsKey.forkHidePreviewsShortcutEnabled] as? Bool == true
+            && SettingsBackupSupport.exportKeys().contains(DefaultsKey.forkHidePreviewsShortcut),
+               "the hide-all-previews shortcut has its own combination, on by default, carried in backups")
     }
 }

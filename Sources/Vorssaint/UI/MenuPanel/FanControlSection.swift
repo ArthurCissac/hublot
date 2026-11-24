@@ -255,8 +255,8 @@ struct FanControlCardContent: View {
                         .foregroundStyle(.secondary)
                     Spacer()
                     VStack(alignment: .trailing, spacing: 1) {
-                        Text(String(format: strings.currentRPMFormat,
-                                    Int(fan.actualRPM.rounded())))
+                        Text(ForkPanelLook.fanStopped(rpm: fan.actualRPM) ? ForkPanelStrings.current.fanStopped  // Fork
+                             : String(format: strings.currentRPMFormat, Int(fan.actualRPM.rounded())))
                             .font(.system(size: 10.5, weight: .semibold).monospacedDigit())
                         if fan.isManuallyControlled {
                             Text(String(format: strings.targetRPMFormat,
@@ -279,8 +279,8 @@ struct FanControlCardContent: View {
                         .font(.system(size: 10.5))
                         .foregroundStyle(.secondary)
                     Spacer()
-                    Text(String(format: strings.currentRPMFormat,
-                                Int(fallbackFanSpeeds[index].rounded())))
+                    Text(ForkPanelLook.fanStopped(rpm: fallbackFanSpeeds[index]) ? ForkPanelStrings.current.fanStopped  // Fork
+                         : String(format: strings.currentRPMFormat, Int(fallbackFanSpeeds[index].rounded())))
                         .font(.system(size: 10.5, weight: .semibold).monospacedDigit())
                 }
             }

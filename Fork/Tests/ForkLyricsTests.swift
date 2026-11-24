@@ -101,18 +101,42 @@ enum ForkLyricsTests {
             }
             suite.expect(kept(record(1, "MW2", "Freeze Corleone", "ADC", 291)).count == 1,
                    "eight seconds off is still the same recording")
-            suite.expect(kept(record(1, "MW2", "Freeze Corleone", "ADC", 292)).isEmpty,
-                   "nine seconds off is not")
-            suite.expect(kept(record(1, "MW2", "Freeze Corleone", "ADC", 275)).count == 1
-                && kept(record(1, "MW2", "Freeze Corleone", "ADC", 274)).isEmpty,
+            let nine = kept(record(1, "MW2", "Freeze Corleone", "ADC", 292))
+            suite.expect(nine.count == 1 && nine.first?.lyrics.lines.isEmpty == true && nine.first?.lyrics.plain.isEmpty == false
+                && (nine.first?.score ?? 0) < (kept(record(1, "MW2", "Freeze Corleone", "ADC", 291)).first?.score ?? 0),
+                   "nine seconds off, only the words show, unsynced, ranked below a near record")
+            suite.expect(kept(record(1, "MW2", "Freeze Corleone", "ADC", 275)).first?.lyrics.lines.isEmpty == false
+                && kept(record(1, "MW2", "Freeze Corleone", "ADC", 274)).first?.lyrics.lines.isEmpty == true,
                    "the same bound holds for a shorter catalog record")
+            suite.expect(kept(record(1, "MW2", "Freeze Corleone", "ADC", 344)).isEmpty,
+                   "more than a minute off is another recording: nothing")
+            // Spotify plays « Réflexions basses » (XEU) for 201 s; LRCLIB has it at 170, 220, 227 and 237 s.
+            let vald = identity("Réflexions basses", "Vald", "XEU", 201.27)
+            let versions = reply([record(1, "Réflexions basses", "Vald", "XEU", 227), record(2, "Réflexions basses", "Vald", "XEU", 170),
+                                  record(3, "Réflexions basses", "Vald", "XEU", 220), record(4, "Réflexions basses", "Vald", "XEU", 237)])
+            let words = Nearby.candidates(versions, strictFound: false, for: vald, defaults: defaults)
+            suite.expect(words.count == 1 && words.first?.recordID == 3 && words.first?.lyrics.lines.isEmpty == true
+                && words.first?.lyrics.plain.isEmpty == false,
+                   "no version near enough: the nearest one's words, without timings")
             suite.expect(kept(record(1, "MW2 (Remix)", "Freeze Corleone", "ADC", 288)).isEmpty,
                    "another version of the song stays refused")
             suite.expect(kept(record(1, "MW2", "Ninho", "ADC", 288)).isEmpty, "another artist stays refused")
             let long = kept(record(1, "MW2", "Freeze Corleone", "ADC", 290, lastLine: "04:50.00"))
-            suite.expect(long.count == 1 && long.first?.lyrics.lines.isEmpty == true
-                && long.first?.lyrics.plain.isEmpty == false,
-                   "verses timed past the song's end fall back to the plain text")
+            suite.expect(long.count == 1 && long.first?.lyrics.lines.count == 3
+                && (long.first?.lyrics.lines.last?.time ?? 999) <= track.duration,
+                   "lines timed past the song's end go; the others stay in time")
+            // Spotify plays « Yacht & Champagne - Skit » for 84 s; LRCLIB's record is 90 s, its last line at 1:29.
+            let skit = identity("Yacht & Champagne - Skit", "Josman", "J.000.$", 84)
+            let skitRecord: [String: Any] = ["id": 5755750, "trackName": "Yacht & Champagne - Skit", "artistName": "Josman",
+                                             "albumName": "J.000.$", "duration": 90.0, "instrumental": false,
+                                             "syncedLyrics": "[00:01.31] Yeah\n[00:05.16] Ouais\n[01:20.00] Fin\n[01:29.01] ",
+                                             "plainLyrics": "Yeah\nOuais\nFin"]
+            let synced = Nearby.candidates(reply([skitRecord]), strictFound: false, for: skit, defaults: defaults).first?.lyrics
+            suite.expect(synced?.lines.map(\.text) == ["Yeah", "Ouais", "Fin"] && synced?.lines.first?.time == 1.31,
+                   "a record six seconds longer scrolls in time, its line past the end left out")
+            suite.expect(Nearby.lineTime("[01:29.01] Yeah") == 89.01 && Nearby.lineTime("[ar:Josman]") == nil
+                && Nearby.lineTime("Yeah") == nil,
+                   "a line's time is read; tags and untimed lines have none")
             let noAlbum = identity("MW2", "Freeze corleone", "", 283)
             suite.expect(Nearby.candidates(reply([record(1, "MW2", "Freeze Corleone", "ADC", 288)]), strictFound: false,
                                            for: noAlbum, defaults: defaults).isEmpty,

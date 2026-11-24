@@ -27,6 +27,8 @@ struct ForkSwishSettings: View {
     @AppStorage(DefaultsKey.forkSwishHaptics) private var haptics = true
     @AppStorage(DefaultsKey.forkSwishSensitivity) private var sensitivity = 1
     @AppStorage(DefaultsKey.forkSwishCancelTimeout) private var cancelTimeout = 0.8
+    @AppStorage(DefaultsKey.forkMissionControlPlus) private var missionControlPlus = true
+    @AppStorage(DefaultsKey.forkChromeFullscreenSwipe) private var chromeSwipe = true
     @ObservedObject private var arrowHotkeys = ForkSwishArrowHotkeys.shared
     @State private var swishRunning = false
     @State private var importResult: String?
@@ -112,6 +114,18 @@ struct ForkSwishSettings: View {
                     }
                 }
                 caption(swish.importCaption)
+            }
+
+            let missionControl = ForkMissionControlStrings.current
+            Section(missionControl.section) {
+                Toggle(missionControl.toggle, isOn: $missionControlPlus)
+                caption(missionControl.caption)
+            }
+
+            let chrome = ForkChromeStrings.current
+            Section(chrome.section) {
+                Toggle(chrome.toggle, isOn: $chromeSwipe)
+                caption(chrome.caption)
             }
         }
     }

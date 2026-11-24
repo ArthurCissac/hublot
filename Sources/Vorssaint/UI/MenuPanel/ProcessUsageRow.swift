@@ -28,6 +28,7 @@ struct ProcessUsageRow: View {
             }
         }
         .help(row.name)
+        .modifier(ForkProcessQuitOnHover(row: row))  // Fork
     }
 
     private var activatableContent: some View {

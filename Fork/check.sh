@@ -124,6 +124,13 @@ fi
 #     window captures lose their shadow or background;
 #   - ForkScrollingDirection (three lines): horizontal scrolling captures come out
 #     turned a quarter, or vertical;
+#   - ForkScrollingControls (six lines): scrolling captures show upstream's controls
+#     again, the pointer-steered auto-scroll is gone, or its strip stays on screen
+#     or shows up in the picture;
+#   - ForkCropTool, ForkCropOverlay, ForkCropBar (ten lines): the editor's crop is
+#     back to upstream's small grips, or draws nothing, or leaving it loses the crop;
+#   - ForkScrollingPreviewFeed (two lines): the live preview beside a scrolling
+#     capture stays empty, or misses the strips after the first picture;
 #   - ForkClipboardShelf (two lines), ForkClipboardSettingsSection: the clipboard
 #     history opens upstream's window again, and its setting is gone;
 #   - ForkRecorderImageVisibility, ForkRecorderImageDrag (two lines): a picture moved on
@@ -133,6 +140,9 @@ fi
 #   - ForkTitleBarGestures (apply's window: parameter, forkTarget), ForkSwishSettings:
 #     title bar gestures act on the frontmost window, or not at all;
 #   - ForkDragTopGuardRow: the setting that keeps Mission Control away from a drag is gone;
+#   - ForkBatteryLogic.pinnedMetric, ForkBatterySettingsCard: the pinned device no longer
+#     shows in the menu bar, or lot 8's settings are gone;
+#   - ForkCleanerToolsBar: the disk map and the antivirus can no longer be opened;
 #   - ForkTrackpadSwitcher (the AppSwitcher extension, the settings row): three fingers
 #     on the trackpad no longer open the window switcher;
 #   - ForkLyricsNearbyDuration (two lines), ForkLyricsSettingsRow: lyrics a few
@@ -140,6 +150,9 @@ fi
 #   - forkReadSpotifyQueue (call and extension), ForkSpotifyConnectButton,
 #     ForkSpotifyQueueSettingsRows: the island's queue page no longer reads
 #     Spotify's queue, cannot sign in, or its settings are gone;
+#   - ForkRoundSteps (volume, two brightness lines), ForkRoundStepSettingsRows: the volume
+#     and brightness keys go back to the system's sixteenth steps, or their settings are gone;
+#   - ForkTranslateSettingsSection: the translation's settings are gone from the island's page;
 #   - ForkTests: the fork's tests compile but never run.
 print
 print "Fork hooks in upstream sources"
@@ -188,6 +201,24 @@ for hook_site in \
     'ForkScrollingDirection.first(await source.image())|Sources/Vorssaint/Services/QuickTools/ScreenshotScrollingCapture.swift' \
     'ForkScrollingDirection.oriented(await source.image())|Sources/Vorssaint/Services/QuickTools/ScreenshotScrollingCapture.swift' \
     'ForkScrollingDirection.restored(stitch(completedSlices))|Sources/Vorssaint/Services/QuickTools/ScreenshotScrollingCapture.swift' \
+    'ids.formUnion(ForkScrollingControls.shared.windowIDs)|Sources/Vorssaint/Services/QuickTools/ScreenshotService.swift' \
+    'ForkScrollingControls.shared.dismiss()  // Fork: on teardown|Sources/Vorssaint/Services/QuickTools/ScreenshotService.swift' \
+    '&& !ForkScrollingControls.isEnabled  // Fork|Sources/Vorssaint/Services/QuickTools/ScreenshotService.swift' \
+    'ForkScrollingControls.shared.show(region: region, onFinish: { finishSignal.request() },|Sources/Vorssaint/Services/QuickTools/ScreenshotService.swift' \
+    'ForkScrollingControls.shared.update(height: height)  // Fork|Sources/Vorssaint/Services/QuickTools/ScreenshotService.swift' \
+    'ForkScrollingControls.shared.dismiss()  // Fork: when the capture ends|Sources/Vorssaint/Services/QuickTools/ScreenshotService.swift' \
+    'ForkCropTool.commitOnLeave(self, draft: cropDraft, next: tool)|Sources/Vorssaint/Services/QuickTools/ScreenshotEditorController.swift' \
+    'ForkCropTool.handle(at: point, rect: draft, zoom: currentDisplayZoom)|Sources/Vorssaint/Services/QuickTools/ScreenshotEditorController.swift' \
+    'ForkCropTool.resized(origin, dragging: handle, to: point, imageSize: imageSize)|Sources/Vorssaint/Services/QuickTools/ScreenshotEditorController.swift' \
+    'ForkCropTool.drawn(from: dragStart, to: point, imageSize: imageSize)|Sources/Vorssaint/Services/QuickTools/ScreenshotEditorController.swift' \
+    'ForkCropTool.endDrag(at: point, isTap: isTap, draft: cropDraft, imageSize: imageSize)|Sources/Vorssaint/Services/QuickTools/ScreenshotEditorController.swift' \
+    'model.cropDraft = nil  // Fork: Escape|Sources/Vorssaint/Services/QuickTools/ScreenshotEditorController.swift' \
+    'ForkCropOverlay(model: model, zoom: zoom, canvasSize: canvasSize)|Sources/Vorssaint/UI/Screenshot/ScreenshotEditorView.swift' \
+    'if ForkCropTool.setCursor(tool: model.tool, draft: model.cropDraft, imageSize: model.imageSize,|Sources/Vorssaint/UI/Screenshot/ScreenshotEditorView.swift' \
+    'guard !ForkCropTool.isEnabled else { return }|Sources/Vorssaint/UI/Screenshot/ScreenshotEditorView.swift' \
+    'if ForkCropTool.isEnabled { ForkCropBar(model: model, strings: strings) } else { cropBar }|Sources/Vorssaint/UI/Screenshot/ScreenshotEditorView.swift' \
+    'ForkScrollingPreviewFeed.send(slices)  // Fork: live preview, first picture|Sources/Vorssaint/Services/QuickTools/ScreenshotScrollingCapture.swift' \
+    'ForkScrollingPreviewFeed.send(slices)  // Fork: live preview, each strip|Sources/Vorssaint/Services/QuickTools/ScreenshotScrollingCapture.swift' \
     'if ForkClipboardShelf.shared.toggle() { return }|Sources/Vorssaint/Services/Clipboard/ClipboardHistoryService.swift' \
     'if ForkClipboardShelf.shared.show() { return }|Sources/Vorssaint/Services/Clipboard/ClipboardHistoryService.swift' \
     'ForkClipboardSettingsSection()|Sources/Vorssaint/UI/Settings/ClipboardSettings.swift' \
@@ -203,6 +234,9 @@ for hook_site in \
     'fileprivate func forkTarget(for window: AXUIElement, action: WindowLayoutAction)|Sources/Vorssaint/Services/WindowLayout/WindowLayoutService.swift' \
     'ForkSwishSettings()|Sources/Vorssaint/UI/Settings/WindowLayoutSettings.swift' \
     'ForkDragTopGuardRow()|Sources/Vorssaint/UI/Settings/ShelfSettings.swift' \
+    'if let pinned = ForkBatteryLogic.pinnedMetric(devices: devices,|Sources/Vorssaint/Services/Metrics/PeripheralBatterySupport.swift' \
+    'ForkBatterySettingsCard()  // Fork|Sources/Vorssaint/UI/Settings/MonitorSettings.swift' \
+    'ForkCleanerToolsBar()  // Fork|Sources/Vorssaint/UI/Cleaner/CleanerView.swift' \
     'func forkBeginGestureSession(scope: SwitcherSessionScope, reversed: Bool)|Sources/Vorssaint/Services/Switcher/AppSwitcher.swift' \
     'ForkSwitcherGestureRow(switcherEnabled: switcherEnabled)|Sources/Vorssaint/UI/Settings/SwitcherSettings.swift' \
     'ForkLyricsNearbyDuration.candidates(result.data, strictFound: !found.isEmpty, for: track, verifiedArtistAliases: verifiedArtistAliases)  // Fork|Sources/Vorssaint/Services/Notch/NotchLyricsService.swift' \
@@ -212,6 +246,148 @@ for hook_site in \
     'fileprivate func forkReadSpotifyQueue(after reply: [String: Any], request: UUID)|Sources/Vorssaint/Services/Notch/NotchMusicService.swift' \
     'ForkSpotifyConnectButton(playback: playback)  // Fork|Sources/Vorssaint/UI/Notch/NotchQueueView.swift' \
     'if queueEnabled, AppFeature.notchQueue.isAvailable { ForkSpotifyQueueSettingsRows() }|Sources/Vorssaint/UI/Settings/NotchSettings.swift' \
+    'ForkLidDisplaySleepRow().padding(.leading, settingsRowTextInset)  // Fork|Sources/Vorssaint/UI/Settings/EnergySettings.swift' \
+    'ForkLidDisplaySleepMenuRow(clamshellPreferred: awake.clamshellPreferred)  // Fork|Sources/Vorssaint/UI/MenuPanel/MenuPanelView.swift' \
+    'if ForkLidDisplaySleep.shared.holdsDisplaysAsleep { return }  // Fork|Sources/Vorssaint/Services/KeepAwakeManager.swift' \
+    'if !editing, expanded != .memory { ForkHeavyAppsBlock() }  // Fork|Sources/Vorssaint/UI/MenuPanel/SystemSection.swift' \
+    '.modifier(ForkProcessQuitOnHover(row: row))  // Fork|Sources/Vorssaint/UI/MenuPanel/ProcessUsageRow.swift' \
+    'ForkDiskPanelTools()  // Fork|Sources/Vorssaint/UI/MenuPanel/DiskSection.swift' \
+    'if !ForkPanelLook.hidesLogo() { header }  // Fork|Sources/Vorssaint/UI/MenuPanel/MenuPanelView.swift' \
+    'ForkPanelTabs(sections: visibleSections, active: activeSection|Sources/Vorssaint/UI/MenuPanel/MenuPanelView.swift' \
+    'return 180 - ForkPanelLook.chromeSaving() + bannerHeight  // Fork|Sources/Vorssaint/UI/MenuPanel/MenuPanelView.swift' \
+    'ForkKeepAwakeTop {  // Fork|Sources/Vorssaint/UI/MenuPanel/MenuPanelView.swift' \
+    '}  // Fork: end of ForkKeepAwakeTop|Sources/Vorssaint/UI/MenuPanel/MenuPanelView.swift' \
+    'ForkSectionTitle { sectionTitle(title) }  // Fork|Sources/Vorssaint/UI/MenuPanel/PanelLayout.swift' \
+    'ForkQuickActionsGrid(editing: editing) { QuickTogglesList(|Sources/Vorssaint/UI/MenuPanel/QuickTogglesSection.swift' \
+    '} }  // Fork: end of ForkQuickActionsGrid|Sources/Vorssaint/UI/MenuPanel/QuickTogglesSection.swift' \
+    'ForkPanelLook.showsDiskChooser(diskCount: disks.count, editing: editing)|Sources/Vorssaint/UI/MenuPanel/DiskSection.swift' \
+    'ForkPanelLook.diskBlocks(orderedBlocks.filter(isVisible)|Sources/Vorssaint/UI/MenuPanel/DiskSection.swift' \
+    'ForkPanelLoadingRows(leading: 38)  // Fork|Sources/Vorssaint/UI/MenuPanel/SystemSection.swift' \
+    'ForkPanelValueText(text: value.map { MetricFormat.temperature|Sources/Vorssaint/UI/MenuPanel/SystemSection.swift' \
+    'ForkPanelValueText(text: fraction.map|Sources/Vorssaint/UI/MenuPanel/SystemSection.swift' \
+    'ForkPanelLoadingRows()  // Fork|Sources/Vorssaint/UI/MenuPanel/NetworkSection.swift' \
+    'ForkPanelValueText(text: value.map { MetricFormat.networkRate|Sources/Vorssaint/UI/MenuPanel/NetworkSection.swift' \
+    'if !ForkPanelLook.systemSoundsInOptions() { systemSoundOutputPicker }  // Fork|Sources/Vorssaint/UI/MenuPanel/MixerSection.swift' \
+    'if ForkPanelLook.systemSoundsInOptions() { systemSoundOutputPicker.padding(.leading, 19) }  // Fork|Sources/Vorssaint/UI/MenuPanel/MixerSection.swift' \
+    '.lineLimit(ForkPanelLook.deviceLines())  // Fork|Sources/Vorssaint/UI/MenuPanel/MixerSection.swift' \
+    'Text(ForkPanelLook.fanStopped(rpm: fan.actualRPM)|Sources/Vorssaint/UI/MenuPanel/FanControlSection.swift' \
+    'Text(ForkPanelLook.fanStopped(rpm: fallbackFanSpeeds[index])|Sources/Vorssaint/UI/MenuPanel/FanControlSection.swift' \
+    'ForkDiskHealthFold(disk: disk, editing: editing) { smartBlock(|Sources/Vorssaint/UI/MenuPanel/DiskSection.swift' \
+    'ForkSimplePanelsRow()  // Fork|Sources/Vorssaint/UI/Settings/GeneralToolSettings.swift' \
+    'case ambient  // Fork: background sound (ForkAmbientLogic)|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
+    'case .ambient: return ForkAmbientLogic.islandSymbol  // Fork|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
+    'case .ambient: return .none  // Fork|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
+    'case .ambient: return ForkAmbientLogic.islandControlAvailable(in: defaults)  // Fork|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
+    'case .ambient: ForkAmbientIslandTile(service: service)  // Fork|Sources/Vorssaint/UI/Notch/NotchControlsView.swift' \
+    'case .ambient: return ForkAmbientStrings.current.title  // Fork|Sources/Vorssaint/UI/Notch/NotchControlsView.swift' \
+    'case .ambient: ForkAmbientPlayer.shared.toggle()  // Fork|Sources/Vorssaint/Services/Notch/NotchService.swift' \
+    '== [.panel, .ambient, .tasks],  // Fork|Tests/NotchTests.swift' \
+    'wave (ForkAmbientStrip)|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
+    'case .ambient: return ForkAmbientLogic.title(french: language == .fr)  // Fork|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
+    'case .ambient: return .ambient  // Fork: its own page|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
+    'self == .ambient ? ForkAmbientLogic.islandSymbol : self == .keepAwake|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
+    '+ (ForkAmbientLogic.islandActivityShown() ? [.ambient] : [])  // Fork|Sources/Vorssaint/Services/Notch/NotchService.swift' \
+    'case .ambient: return geometry.compactTimerGeometry(showsDownloads: false, wing: ForkAmbientLogic.islandStripWing(geometry))  // Fork|Sources/Vorssaint/Services/Notch/NotchService.swift' \
+    'case .ambient: return layout.keepAwakeSurface(reading: ForkAmbientLogic.islandReading(language), geometry: geometry)  // Fork|Sources/Vorssaint/Services/Notch/NotchService.swift' \
+    'case .ambient: ForkAmbientCapsuleStrip(service: service, size: size)  // Fork|Sources/Vorssaint/UI/Notch/NotchView.swift' \
+    'case .ambient: ForkAmbientStrip(service: service, displayGeometry: geometry)  // Fork|Sources/Vorssaint/UI/Notch/NotchView.swift' \
+    'case .ambient: ForkAmbientCapsuleStrip(service: service, size: size, displayGeometry: geometry)  // Fork|Sources/Vorssaint/UI/Notch/NotchMirrorView.swift' \
+    'case .ambient: ForkAmbientStrip(service: service, displayGeometry: mirror.strip)  // Fork|Sources/Vorssaint/UI/Notch/NotchMirrorView.swift' \
+    'case .timer, .keepAwake, .watch, .ambient, .tasks, .deploys:  // Fork|Sources/Vorssaint/UI/Notch/NotchCapsuleViews.swift' \
+    'case .timer, .keepAwake, .watch, .ambient, .tasks, .deploys:  // Fork: no mark|Sources/Vorssaint/UI/Notch/NotchTimerStrip.swift' \
+    'case .timer, .keepAwake, .watch, .ambient, .tasks, .deploys:  // Fork: its own title|Sources/Vorssaint/UI/Notch/NotchTimerStrip.swift' \
+    'case .downloads, .timer, .keepAwake, .watch, .ambient, .tasks, .deploys:  // Fork|Sources/Vorssaint/UI/Notch/NotchTimerStrip.swift' \
+    "case tasks  // Fork: Todoist's next task (ForkTodoistStrip)|Sources/Vorssaint/Services/Notch/NotchSupport.swift" \
+    'case .tasks: return ForkTodoistLogic.title(french: language == .fr)  // Fork: the next task|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
+    "case .tasks: return .tasks  // Fork: Todoist's page|Sources/Vorssaint/Services/Notch/NotchSupport.swift" \
+    '+ (ForkTodoistLogic.islandActivityShown() ? [.tasks] : [])  // Fork: the next task|Sources/Vorssaint/Services/Notch/NotchService.swift' \
+    'case .tasks: return geometry.compactCalendarGeometry(wing: ForkTodoistLogic.islandStripWing(geometry))  // Fork|Sources/Vorssaint/Services/Notch/NotchService.swift' \
+    'case .tasks: return layout.keepAwakeSurface(reading: ForkTodoistLogic.islandReading(), geometry: geometry)  // Fork|Sources/Vorssaint/Services/Notch/NotchService.swift' \
+    'if ForkTodoistLogic.isReminder(symbol: selectedNotice.symbol) { open(.tasks); if expanded { dismissNotice() }; return }  // Fork|Sources/Vorssaint/Services/Notch/NotchService.swift' \
+    'case .tasks: ForkTodoistCapsuleStrip(service: service, size: size)  // Fork|Sources/Vorssaint/UI/Notch/NotchView.swift' \
+    'case .tasks: ForkTodoistStrip(service: service, displayGeometry: geometry)  // Fork|Sources/Vorssaint/UI/Notch/NotchView.swift' \
+    'case .tasks: ForkTodoistCapsuleStrip(service: service, size: size, displayGeometry: geometry)  // Fork|Sources/Vorssaint/UI/Notch/NotchMirrorView.swift' \
+    'case .tasks: ForkTodoistStrip(service: service, displayGeometry: mirror.strip)  // Fork|Sources/Vorssaint/UI/Notch/NotchMirrorView.swift' \
+    'ForkPortQRMenuItem(entry: entry)  // Fork: QR code to open on a phone|Sources/Vorssaint/UI/PortManager/PortManagerView.swift' \
+    'ForkPortQRButton(entry: entry)  // Fork: QR code to open on a phone|Sources/Vorssaint/UI/PortManager/PortManagerView.swift' \
+    'ForkLocalQRToggle().padding(.horizontal, 14).padding(.bottom, 8)  // Fork: QR code button toggle|Sources/Vorssaint/UI/PortManager/PortManagerView.swift' \
+    'ForkPortQRButton(entry: entry)  // Fork: QR code to open on a phone|Sources/Vorssaint/UI/MenuPanel/PanelPortManagerView.swift' \
+    'if let fork = ForkCurrencyLogic.commandBarAnswer(query, bar) { return fork }  // Fork: currencies at the ECB rates|Sources/Vorssaint/Services/CommandBar/CommandBarCatalog.swift' \
+    'ForkCurrencySettingsRows()  // Fork: currencies beside the calculator|Sources/Vorssaint/UI/Settings/CommandBarSettings.swift' \
+    'ForkNotifications.handle(response)  // Fork: a scan|Sources/Vorssaint/App/AppDelegate.swift' \
+    'case tasks  // Fork: Todoist (ForkTodoistLogic)|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
+    'case .tasks: return ForkTodoistLogic.islandSymbol  // Fork|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
+    'case .tasks: return .none  // Fork: Todoist|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
+    'case .tasks: return ForkTodoistLogic.islandControlAvailable(in: defaults)  // Fork|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
+    'case .tasks: ForkTodoistIslandTile(service: service)  // Fork|Sources/Vorssaint/UI/Notch/NotchControlsView.swift' \
+    'case .tasks: return ForkTodoistStrings.current.title  // Fork|Sources/Vorssaint/UI/Notch/NotchControlsView.swift' \
+    'case .tasks: perform { ForkTodoistPanel.shared.show() }  // Fork|Sources/Vorssaint/Services/Notch/NotchService.swift' \
+    'case deploys  // Fork|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
+    'case .deploys: return ForkVercelLogic.title(french: language == .fr)  // Fork|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
+    'case .deploys: return .controls  // Fork|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
+    'self == .deploys ? ForkVercelLogic.islandSymbol|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
+    'ForkVercelLogic.islandActivityShown() ? [.deploys] : []|Sources/Vorssaint/Services/Notch/NotchService.swift' \
+    'case .deploys: return geometry.compactCalendarGeometry(wing: ForkVercelLogic.islandStripWing(geometry))|Sources/Vorssaint/Services/Notch/NotchService.swift' \
+    'case .deploys: return layout.keepAwakeSurface(reading: ForkVercelLogic.islandReading()|Sources/Vorssaint/Services/Notch/NotchService.swift' \
+    'if ForkVercelLogic.isNotice(symbol: selectedNotice.symbol)|Sources/Vorssaint/Services/Notch/NotchService.swift' \
+    'case .deploys: ForkVercelCapsuleStrip(service: service, size: size, displayGeometry: geometry)|Sources/Vorssaint/UI/Notch/NotchMirrorView.swift' \
+    'case .deploys: ForkVercelStrip(service: service, displayGeometry: mirror.strip)|Sources/Vorssaint/UI/Notch/NotchMirrorView.swift' \
+    'case .deploys: ForkVercelCapsuleStrip(service: service, size: size)  // Fork|Sources/Vorssaint/UI/Notch/NotchView.swift' \
+    'case .deploys: ForkVercelStrip(service: service, displayGeometry: geometry)|Sources/Vorssaint/UI/Notch/NotchView.swift' \
+    'ForkVercelNotice.tint(for: notice.symbol)|Sources/Vorssaint/UI/Notch/NotchNoticeView.swift' \
+    'case .weather: return ForkWeatherLogic.pageSymbol  // Fork|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
+    'case .weather: return "e"  // Fork|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
+    'case .weather: return ForkWeatherLogic.pageAvailable(in: defaults)  // Fork|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
+    'case .weather: ForkWeatherIslandPage(size: pageSize)  // Fork|Sources/Vorssaint/UI/Notch/NotchView.swift' \
+    'case .weather: return ForkWeatherLogic.title(french: language == .fr)  // Fork|Sources/Vorssaint/UI/Notch/NotchView.swift' \
+    'case .weather: ForkWeatherIslandPage(size: size)  // Fork|Sources/Vorssaint/UI/Settings/NotchContentEditor.swift' \
+    'case .weather: return .cyan  // Fork|Sources/Vorssaint/UI/Settings/NotchContentEditor.swift' \
+    'case .weather: return ForkWeatherLogic.pageSummary(|Sources/Vorssaint/Core/NotchEditorStrings.swift' \
+    'ForkWeatherSettingsSection()  // Fork|Sources/Vorssaint/UI/Settings/NotchSettings.swift' \
+    'ForkVercelSettingsSection()  // Fork|Sources/Vorssaint/UI/Settings/NotchSettings.swift' \
+    'ForkTodoistSettingsSection()  // Fork|Sources/Vorssaint/UI/Settings/NotchSettings.swift' \
+    'let forkDecor = ForkMascotDecor()  // Fork|Sources/Vorssaint/UI/Notch/NotchMascotView.swift' \
+    'forkDecor.connect(rig: self, hopper: hopper, squasher: squasher, tilter: tilter, body: fill, outline: fillMask)|Sources/Vorssaint/UI/Notch/NotchMascotView.swift' \
+    'forkDecor.reacted(reaction)  // Fork|Sources/Vorssaint/UI/Notch/NotchMascotView.swift' \
+    'forkDecor.variantOverride = context.environment.forkMascotVariant  // Fork: a preview|Sources/Vorssaint/UI/Notch/NotchMascotView.swift' \
+    'forkDecor.variantOverride = context.environment.forkMascotVariant  // Fork: kept as it updates|Sources/Vorssaint/UI/Notch/NotchMascotView.swift' \
+    'forkDecor.configure(size: size, scale: scale)  // Fork|Sources/Vorssaint/UI/Notch/NotchMascotView.swift' \
+    'forkDecor.moodChanged(mood)  // Fork|Sources/Vorssaint/UI/Notch/NotchMascotView.swift' \
+    'let length = forkDecor.idleBeat() { pauseBlinking(for: length, from: nil); return }|Sources/Vorssaint/UI/Notch/NotchMascotView.swift' \
+    'private let forkGaze = ForkMascotGaze()  // Fork|Sources/Vorssaint/UI/Notch/NotchMascotView.swift' \
+    'forkGaze.sync(host: self, on: followsPointer)  // Fork|Sources/Vorssaint/UI/Notch/NotchMascotView.swift' \
+    'ForkMascotLife.notePetted()  // Fork|Sources/Vorssaint/UI/Notch/NotchMascotView.swift' \
+    'path: ForkMascotLife.path(for: visit, base: NotchMascotMotion.path(|Sources/Vorssaint/UI/Notch/NotchMascotView.swift' \
+    'ForkMascotLife.restingMood(base: KeepAwakeManager.shared.isActive|Sources/Vorssaint/Services/Notch/NotchService.swift' \
+    'ForkMascotSettingsRows()  // Fork|Sources/Vorssaint/UI/Settings/NotchMascotSettings.swift' \
+    'case ambient, tasks, weather  // Fork|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
+    'case .ambient: return ForkAmbientLogic.pageSymbol  // Fork|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
+    'case .tasks: return ForkTodoistLogic.pageSymbol  // Fork|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
+    'case .ambient: return "u"  // Fork|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
+    'case .tasks: return "k"  // Fork|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
+    'case .ambient: return ForkAmbientLogic.pageAvailable(in: defaults)  // Fork|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
+    'case .tasks: return ForkTodoistLogic.pageAvailable(in: defaults)  // Fork|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
+    'case .ambient: ForkAmbientIslandPage(size: pageSize)  // Fork|Sources/Vorssaint/UI/Notch/NotchView.swift' \
+    'case .tasks: ForkTodoistIslandPage(size: pageSize)  // Fork|Sources/Vorssaint/UI/Notch/NotchView.swift' \
+    'case .ambient: return ForkAmbientLogic.title(french: language == .fr)  // Fork|Sources/Vorssaint/UI/Notch/NotchView.swift' \
+    'case .tasks: return ForkTodoistLogic.title(french: language == .fr)  // Fork|Sources/Vorssaint/UI/Notch/NotchView.swift' \
+    'case .ambient: ForkAmbientIslandPage(size: size)  // Fork|Sources/Vorssaint/UI/Settings/NotchContentEditor.swift' \
+    'case .tasks: ForkTodoistIslandPage(size: size)  // Fork|Sources/Vorssaint/UI/Settings/NotchContentEditor.swift' \
+    'case .ambient: return .indigo  // Fork|Sources/Vorssaint/UI/Settings/NotchContentEditor.swift' \
+    'case .tasks: return .red  // Fork|Sources/Vorssaint/UI/Settings/NotchContentEditor.swift' \
+    'case .mixer, .system, .tools, .ambient, .tasks, .weather:  // Fork|Sources/Vorssaint/UI/Settings/NotchSettings.swift' \
+    'case .ambient: return ForkAmbientLogic.pageSummary(french: L10n.shared.language == .fr)  // Fork|Sources/Vorssaint/Core/NotchEditorStrings.swift' \
+    'case .tasks: return ForkTodoistLogic.pageSummary(french: L10n.shared.language == .fr)  // Fork|Sources/Vorssaint/Core/NotchEditorStrings.swift' \
+    '.scratchpad, .watch, .ambient, .tasks, .weather:  // Fork|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
+    'case .ambient, .tasks, .weather: return nil  // Fork|Sources/Vorssaint/UI/Settings/NotchSettings.swift' \
+    'private var forkVariant = "classic"  // Fork|Sources/Vorssaint/UI/Settings/NotchMascotSettings.swift' \
+    'ForkMascotVariantPicker(look: look)  // Fork|Sources/Vorssaint/UI/Settings/NotchMascotSettings.swift' \
+    'ForkMascotVariantLogic.variant(forkVariant).keepsShape {  // Fork|Sources/Vorssaint/UI/Settings/NotchMascotSettings.swift' \
+    'ForkRoundStepSettingsRows(volume: volume && volumeAvailable, brightness: brightness && brightnessAvailable)  // Fork|Sources/Vorssaint/UI/Settings/NotchSettings.swift' \
+    'ForkRoundSteps.volumeLevel(current: $0, direction: direction, fine: fine) ?? NotchSupport.volumeLevel(current: $0, direction: direction, fine: fine)  // Fork|Sources/Vorssaint/Services/Audio/PreciseVolumeRollerService.swift' \
+    'BrightnessSupport.steppedBrightness(current, delta: delta)  // Fork: key step|Sources/Vorssaint/Services/Display/BrightnessService.swift' \
+    'BrightnessSupport.steppedBrightness(current, delta: delta)  // Fork: system route|Sources/Vorssaint/Services/Display/BrightnessService.swift' \
+    'ForkTranslateSettingsSection()  // Fork: translation of the selection|Sources/Vorssaint/UI/Settings/NotchSettings.swift' \
     'ForkTests.run(suite)|Tests/MetricsTests.swift'; do
     hook="${hook_site%%|*}"
     site="${hook_site##*|}"
@@ -220,6 +396,28 @@ for hook_site in \
         ok "$site: $hook"
     else
         fail "$site: expected exactly one '$hook', found $found"
+    fi
+done
+
+# --- Each fork shortcut has its own id ---------------------------------------
+# Two QuickToolHotkey with the same id answer each other's keys: one shortcut
+# then fires the other's action, or none at all.
+print
+print "Fork shortcut ids"
+dup_ids=$(grep -rhoE 'QuickToolHotkey\(id: [0-9_]+\)' Sources/Vorssaint/Fork | sort | uniq -d)
+if [[ -z "$dup_ids" ]]; then
+    ok "every fork shortcut id is unique"
+else
+    fail "fork shortcut ids used twice: ${dup_ids//$'\n'/, }"
+fi
+# Registering a shortcut writes a preference under upstream's lock and posts
+# a change at once: an owner that registers again from that notification
+# freezes the app at launch. Every owner defers it (ForkCoalescedMainAction).
+for owner in $(grep -l 'QuickToolHotkey(id:' Sources/Vorssaint/Fork/*.swift); do
+    if grep -q 'ForkCoalescedMainAction' "$owner"; then
+        ok "${owner:t} defers its shortcut registration"
+    else
+        fail "${owner:t} registers its shortcut from the preferences' notification without ForkCoalescedMainAction"
     fi
 done
 

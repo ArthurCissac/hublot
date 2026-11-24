@@ -94,6 +94,9 @@ struct NotchEditorStrings {
         case .scratchpad: return scratchpadSummary
         case .agents: return agentsSummary
         case .watch: return watchSummary
+        case .ambient: return ForkAmbientLogic.pageSummary(french: L10n.shared.language == .fr)  // Fork
+        case .tasks: return ForkTodoistLogic.pageSummary(french: L10n.shared.language == .fr)  // Fork
+        case .weather: return ForkWeatherLogic.pageSummary(french: L10n.shared.language == .fr)  // Fork
         }
     }
 }

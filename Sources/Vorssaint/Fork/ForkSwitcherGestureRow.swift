@@ -9,19 +9,28 @@ import SwiftUI
 struct ForkSwitcherGestureRow: View {
     let switcherEnabled: Bool
     @AppStorage(DefaultsKey.forkSwitcherTrackpadGesture) private var gesture = false
+    @AppStorage(DefaultsKey.forkSwitcherTrackpadFingers) private var fingers = 4
 
     var body: some View {
         let text = ForkStrings.current
+        let switcher = ForkSwitcherStrings.current
         VStack(alignment: .leading, spacing: 6) {
-            Toggle(text.switcherGestureToggle, isOn: $gesture)
+            Toggle(switcher.toggle(fingers == 3 ? 3 : 4), isOn: $gesture)
                 .disabled(!switcherEnabled)
+            Picker(switcher.fingers, selection: $fingers) {
+                Text("3").tag(3)
+                Text("4").tag(4)
+            }
+            .pickerStyle(.segmented)
+            .frame(maxWidth: 220)
+            .disabled(!switcherEnabled)
             Text(text.switcherGestureCaption)
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
-            if gesture, ForkTrackpadSwitcher.systemUsesThreeFingerSwipe {
+            if gesture, ForkTrackpadSwitcher.systemUsesSwipe(fingers: fingers == 3 ? 3 : 4) {
                 HStack(spacing: 8) {
-                    Text(text.switcherGestureConflict)
+                    Text(switcher.conflict(fingers == 3 ? 3 : 4))
                         .font(.caption)
                         .foregroundStyle(.orange)
                         .fixedSize(horizontal: false, vertical: true)

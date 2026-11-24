@@ -24,8 +24,9 @@ enum ForkCaptureMenuTests {
         suite.expect(Layout.modes(available: []).isEmpty, "no tool, no mode")
         suite.expect(Layout.modes(available: [.screenshot]) == [.area, .fullScreen, .window, .timer],
                "screenshots alone bring the area, the full screen, the window and the timer")
-        suite.expect(!all.contains(.autoScroll) && Layout.scrollingModes == [.startScrolling, .direction, .autoScroll, .back],
-               "automatic scrolling is offered only once a scrolling capture is chosen, beside its start button")
+        suite.expect(!Layout.Mode.scrolling.needsArea && !Layout.Mode.scrolling.isSetting
+            && Layout.Mode.scrolling.tool == .scrolling,
+               "the scrolling item has no bar of its own: it starts a selection, whatever is framed")
         suite.expect(Layout.modes(available: [.color]).isEmpty,
                "the color picker is not a kind of capture: it adds no mode")
         suite.expect(Layout.recordingModes
@@ -35,12 +36,12 @@ enum ForkCaptureMenuTests {
         suite.expect(!ForkCaptureSelectionGuide.isHidden,
                "upstream's hint bar shows on every selection the capture menu did not start")
         suite.expect(Layout.Mode.allCases.filter(\.isSetting)
-            == [.timer, .direction, .autoScroll, .microphone, .systemAudio, .mono, .clicks, .keys, .camera, .cameraShape, .countdown,
+            == [.timer, .microphone, .systemAudio, .mono, .clicks, .keys, .camera, .cameraShape, .countdown,
                 .scopeArea, .scopeWindow, .scopeScreen],
-               "fourteen items change a setting and leave the bar open")
+               "twelve items change a setting and leave the bar open")
         settings(suite)
-        suite.expect(Layout.Mode.allCases.filter(\.needsArea) == [.area, .scrolling, .text, .recording, .startScrolling, .record],
-               "six items act on the area drawn; the others do not need one")
+        suite.expect(Layout.Mode.allCases.filter(\.needsArea) == [.area, .text, .recording, .record],
+               "four items act on the area drawn; the others do not need one")
     }
 
     private static func geometry(_ suite: TestSuite) {
@@ -48,7 +49,7 @@ enum ForkCaptureMenuTests {
         let size = Layout.barSize(modes: all)
         suite.expect(size == CGSize(width: 458, height: 55), "the main bar is 458 by 55 points, as measured")
 
-        for modes in [all, Layout.scrollingModes, Layout.recordingModes] {
+        for modes in [all, Layout.recordingModes] {
             let bar = CGRect(origin: .zero, size: Layout.barSize(modes: modes))
             let frames = modes.compactMap { Layout.itemFrame($0, in: modes) }
             suite.expect(frames.count == modes.count && frames.allSatisfy { bar.contains($0) },
@@ -71,8 +72,6 @@ enum ForkCaptureMenuTests {
                    "the first rule sits in the gap between the timer and the text mode")
             suite.expect(Layout.mode(at: CGPoint(x: dividers[0], y: 20), in: all) == nil, "a click on a rule picks nothing")
         }
-        suite.expect(Layout.dividerOffsets(in: Layout.scrollingModes).count == 2,
-               "the scrolling bar sets its option and its way back apart")
         suite.expect(Layout.dividerOffsets(in: Layout.recordingModes).count == 3,
                "the recording bar sets what is filmed, its options and its way back apart")
         suite.expect(Layout.dividerOffsets(in: [.text, .recording]).count == 1,

@@ -240,6 +240,9 @@ struct NotchView: View {
             case .calendar: NotchCapsuleCalendarStrip(service: service, size: size)
             case .music: NotchCapsuleMusicStrip(service: service, size: size, interactive: true)
             case .keepAwake: NotchCapsuleKeepAwakeStrip(service: service, size: size)
+            case .ambient: ForkAmbientCapsuleStrip(service: service, size: size)  // Fork
+            case .tasks: ForkTodoistCapsuleStrip(service: service, size: size)  // Fork
+            case .deploys: ForkVercelCapsuleStrip(service: service, size: size)  // Fork
             }
         } else {
             // Handed down, the wings stay as they were drawn while a strip
@@ -254,6 +257,9 @@ struct NotchView: View {
             case .calendar: NotchCalendarStrip(service: service, displayGeometry: geometry)
             case .music: NotchMusicStrip(service: service, displayGeometry: geometry, interactive: true)
             case .keepAwake: NotchKeepAwakeStrip(service: service, displayGeometry: geometry)
+            case .ambient: ForkAmbientStrip(service: service, displayGeometry: geometry)  // Fork
+            case .tasks: ForkTodoistStrip(service: service, displayGeometry: geometry)  // Fork
+            case .deploys: ForkVercelStrip(service: service, displayGeometry: geometry)  // Fork
             }
         }
     }
@@ -602,6 +608,9 @@ struct NotchView: View {
             case .scratchpad: NotchScratchpadView(service: service)
             case .agents: NotchAgentsView(size: pageSize)
             case .watch: NotchWatchView(size: pageSize)
+            case .ambient: ForkAmbientIslandPage(size: pageSize)  // Fork
+            case .tasks: ForkTodoistIslandPage(size: pageSize)  // Fork
+            case .weather: ForkWeatherIslandPage(size: pageSize)  // Fork
             }
         }
     }
@@ -837,6 +846,9 @@ extension NotchModule: PanelOrderItem {
         case .scratchpad: return FeatureStrings.scratchpad(language).pageTitle
         case .agents: return FeatureStrings.notchAgents(language).title
         case .watch: return FeatureStrings.notchWatch(language).title
+        case .ambient: return ForkAmbientLogic.title(french: language == .fr)  // Fork
+        case .tasks: return ForkTodoistLogic.title(french: language == .fr)  // Fork
+        case .weather: return ForkWeatherLogic.title(french: language == .fr)  // Fork
         }
     }
 }

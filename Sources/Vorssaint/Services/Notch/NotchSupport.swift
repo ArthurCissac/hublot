@@ -8,6 +8,7 @@ import CoreGraphics
 
 enum NotchModule: String, CaseIterable, Identifiable {
     case controls, mixer, music, clipboard, captures, files, system, tools, calendar, notifications, timer, camera, downloads, scratchpad, agents, watch
+    case ambient, tasks, weather  // Fork: background sound's, Todoist's and Weather pages
     var id: String { rawValue }
 
     var symbol: String {
@@ -31,6 +32,9 @@ enum NotchModule: String, CaseIterable, Identifiable {
         case .scratchpad: return "note.text"
         case .agents: return "sparkles"
         case .watch: return "eye"
+        case .ambient: return ForkAmbientLogic.pageSymbol  // Fork
+        case .tasks: return ForkTodoistLogic.pageSymbol  // Fork
+        case .weather: return ForkWeatherLogic.pageSymbol  // Fork
         }
     }
 
@@ -53,6 +57,9 @@ enum NotchModule: String, CaseIterable, Identifiable {
         case .scratchpad: return "p"
         case .agents: return "g"
         case .watch: return "o"
+        case .ambient: return "u"  // Fork: background sound's page
+        case .tasks: return "k"  // Fork: Todoist's page
+        case .weather: return "e"  // Fork: the Weather page
         }
     }
 
@@ -76,6 +83,9 @@ enum NotchModule: String, CaseIterable, Identifiable {
         case .scratchpad: return AppFeature.scratchpad.isAvailable(in: defaults)
         case .agents: return AppFeature.notchAgents.isAvailable(in: defaults)
         case .watch: return AppFeature.notchWatch.isAvailable(in: defaults)
+        case .ambient: return ForkAmbientLogic.pageAvailable(in: defaults)  // Fork
+        case .tasks: return ForkTodoistLogic.pageAvailable(in: defaults)  // Fork
+        case .weather: return ForkWeatherLogic.pageAvailable(in: defaults)  // Fork
         case .system:
             return [.monitorCPU, .monitorGPU, .monitorMemory, .monitorNetwork,
                     .monitorDisk, .monitorPower, .fanControl, .connectedDevices].contains { (feature: AppFeature) in
@@ -825,6 +835,9 @@ enum NotchMusicStripLayout {
 
 enum NotchCompactActivity: String, Identifiable {
     case timer, watch, downloads, agents, calendar, music, keepAwake
+    case ambient  // Fork: background sound's wave (ForkAmbientStrip)
+    case tasks  // Fork: Todoist's next task (ForkTodoistStrip)
+    case deploys  // Fork: a Vercel build (ForkVercelStrip)
 
     var id: String { rawValue }
 
@@ -837,6 +850,9 @@ enum NotchCompactActivity: String, Identifiable {
         case .calendar: return FeatureStrings.notchCalendar(language).title
         case .music: return FeatureStrings.notch(language).music
         case .keepAwake: return Strings.localized(language).keepAwakeTitle
+        case .ambient: return ForkAmbientLogic.title(french: language == .fr)  // Fork
+        case .tasks: return ForkTodoistLogic.title(french: language == .fr)  // Fork: the next task
+        case .deploys: return ForkVercelLogic.title(french: language == .fr)  // Fork: a Vercel build
         }
     }
 
@@ -850,11 +866,14 @@ enum NotchCompactActivity: String, Identifiable {
         case .calendar: return .calendar
         case .music: return .music
         case .keepAwake: return .controls
+        case .ambient: return .ambient  // Fork: its own page
+        case .tasks: return .tasks  // Fork: Todoist's page
+        case .deploys: return .controls  // Fork: no page; a click opens Vercel
         }
     }
 
     var symbol: String {
-        self == .keepAwake ? NotchControlItem.keepAwake.symbol : module.symbol
+        self == .deploys ? ForkVercelLogic.islandSymbol : self == .ambient ? ForkAmbientLogic.islandSymbol : self == .keepAwake ? NotchControlItem.keepAwake.symbol : module.symbol  // Fork
     }
 }
 
@@ -1286,6 +1305,8 @@ enum NotchControlSetupRequirement: Equatable {
 
 enum NotchControlItem: String, CaseIterable, Identifiable {
     case volume, brightness, keyboardLight, music, mixer, keepAwake, timer, calendar, microphone, screenshot, recording, speedTest, panel, commandBar, scratchpad
+    case ambient  // Fork: background sound (ForkAmbientLogic)
+    case tasks  // Fork: Todoist (ForkTodoistLogic)
     static let defaultHidden = "keyboardLight,microphone,screenshot,recording,speedTest,panel,commandBar,scratchpad"
     var id: String { rawValue }
 
@@ -1316,6 +1337,8 @@ enum NotchControlItem: String, CaseIterable, Identifiable {
         case .music: return NotchModule.music.symbol
         case .timer: return NotchModule.timer.symbol
         case .calendar: return NotchModule.calendar.symbol
+        case .ambient: return ForkAmbientLogic.islandSymbol  // Fork
+        case .tasks: return ForkTodoistLogic.islandSymbol  // Fork
         }
     }
 
@@ -1335,6 +1358,8 @@ enum NotchControlItem: String, CaseIterable, Identifiable {
         case .music: return .page(.music, feature: nil)
         case .timer: return .page(.timer, feature: .notchTimer)
         case .calendar: return .page(.calendar, feature: .notchCalendar)
+        case .ambient: return .none  // Fork
+        case .tasks: return .none  // Fork: Todoist
         }
     }
 
@@ -1355,6 +1380,8 @@ enum NotchControlItem: String, CaseIterable, Identifiable {
         case .music: return NotchSupport.modules(in: defaults).contains(.music)
         case .timer: return NotchSupport.modules(in: defaults).contains(.timer)
         case .calendar: return NotchSupport.modules(in: defaults).contains(.calendar)
+        case .ambient: return ForkAmbientLogic.islandControlAvailable(in: defaults)  // Fork
+        case .tasks: return ForkTodoistLogic.islandControlAvailable(in: defaults)  // Fork
         }
     }
 }
@@ -2794,7 +2821,7 @@ struct NotchGeometry: Equatable {
                 // Only the cards a person chose; a short set leaves a short island.
                 contentHeight = min(budget, agentsHeight.map { $0 > 0 ? $0 : NotchLayout.emptyHeight } ?? budget)
             // Lists and previews fill the chosen content budget.
-            case .mixer, .calendar, .clipboard, .captures, .files, .notifications, .downloads, .camera, .scratchpad, .watch:
+            case .mixer, .calendar, .clipboard, .captures, .files, .notifications, .downloads, .camera, .scratchpad, .watch, .ambient, .tasks, .weather:  // Fork
                 contentHeight = budget
             }
         }

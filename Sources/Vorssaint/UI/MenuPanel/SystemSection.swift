@@ -271,7 +271,9 @@ struct SystemSection: View {
     private func breakdownList(for kind: BreakdownKind) -> some View {
         if expanded == kind {
             VStack(alignment: .leading, spacing: 4) {
-                if breakdownRows.isEmpty {
+                if breakdownRows.isEmpty, ForkPanelLook.showsLoadingRows(loading: breakdownIsLoading || kind != .energy) {
+                    ForkPanelLoadingRows(leading: 38)  // Fork: no « Measuring… »
+                } else if breakdownRows.isEmpty {
                     Text(breakdownIsLoading ? l10n.s.breakdownMeasuring : emptyBreakdownText(for: kind))
                         .font(.system(size: 10.5))
                         .foregroundStyle(.tertiary)
@@ -344,7 +346,7 @@ struct SystemSection: View {
                     .font(.system(size: 10))
                     .foregroundStyle(.secondary)
             }
-            Text(value.map { MetricFormat.temperature($0, unit: displayTemperatureUnit) } ?? "-")
+            ForkPanelValueText(text: value.map { MetricFormat.temperature($0, unit: displayTemperatureUnit) }, fallback: "-")  // Fork
                 .font(.system(size: 15, weight: .semibold, design: .rounded))
                 .monospacedDigit()
         }
@@ -497,7 +499,7 @@ struct SystemSection: View {
                 .minimumScaleFactor(0.8)
                 .frame(width: 52, alignment: .leading)
             UsageBar(fraction: fraction ?? 0)
-            Text(fraction.map { String(format: "%.0f%%", locale: MetricFormat.locale, $0 * 100) } ?? "-")
+            ForkPanelValueText(text: fraction.map { String(format: "%.0f%%", locale: MetricFormat.locale, $0 * 100) }, fallback: "-")  // Fork
                 .font(.system(size: 11, weight: .medium))
                 .monospacedDigit()
                 .frame(width: 38, alignment: .trailing)
@@ -546,6 +548,7 @@ struct SystemSection: View {
                         .graphCeilingLabel(MetricFormat.percent(1))
                 }
                 breakdownList(for: .memory)
+                if !editing, expanded != .memory { ForkHeavyAppsBlock() }  // Fork: apps to quit
             }
         }
     }

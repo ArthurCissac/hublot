@@ -1748,6 +1748,7 @@ enum CommandBarCatalog {
                 countsUsage: false,
                 run: { _ in copyAnswer(converted.formatted) })
         }
+        if let fork = ForkCurrencyLogic.commandBarAnswer(query, bar) { return fork }  // Fork: currencies at the ECB rates
         if let converted = CommandBarColors.convert(query) {
             return CommandBarEntry(
                 id: "color.result",

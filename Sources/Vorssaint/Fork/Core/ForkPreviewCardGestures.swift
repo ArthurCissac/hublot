@@ -66,4 +66,6 @@ enum ForkPreviewCardGestures {
     /// Option-Shift-Command-R brings back the last card put away, by key
     /// position so it is the same key on every layout.
     static let reopenShortcut = GlobalShortcut(keyCode: 15, modifiers: [.option, .shift, .command])
+    /// Option-Shift-Command-H, by key position: hides every preview card, and shows them again.
+    static let hideShortcut = GlobalShortcut(keyCode: 4, modifiers: [.option, .shift, .command])
 }

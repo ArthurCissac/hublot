@@ -1233,6 +1233,7 @@ final class KeepAwakeManager: ObservableObject {
     }
 
     private func jiggleMousePointer() {
+        if ForkLidDisplaySleep.shared.holdsDisplaysAsleep { return }  // Fork: a mouse move would wake the displays
         guard isActive,
               UserDefaults.standard.bool(forKey: DefaultsKey.keepAwakeMouseJiggleEnabled),
               let original = Self.currentMouseLocation(),

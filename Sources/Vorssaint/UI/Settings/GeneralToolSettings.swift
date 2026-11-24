@@ -23,6 +23,7 @@ struct GeneralToolSettings: View {
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
                         PanelLayoutEditor()
+                        ForkSimplePanelsRow()  // Fork: the simple menus
                         Divider()
                         MenuBarIconSymbolRow()
                         Divider()

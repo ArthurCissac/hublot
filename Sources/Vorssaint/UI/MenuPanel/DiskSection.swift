@@ -33,7 +33,7 @@ struct DiskSection: View {
                         .font(.system(size: 10.5))
                         .foregroundStyle(.tertiary)
                 } else {
-                    diskSelector
+                    if ForkPanelLook.showsDiskChooser(diskCount: disks.count, editing: editing) { diskSelector }  // Fork
                     if let selected = selectedDisk {
                         ForEach(blocks(editing: editing), id: \.self) { block in
                             Divider()
@@ -104,7 +104,7 @@ struct DiskSection: View {
     }
 
     private func blocks(editing: Bool) -> [Block] {
-        editing ? orderedBlocks : orderedBlocks.filter(isVisible)
+        editing ? orderedBlocks : ForkPanelLook.diskBlocks(orderedBlocks.filter(isVisible), hasExternalDisk: !ejectableDisks.isEmpty)  // Fork
     }
 
     private func isVisible(_ block: Block) -> Bool {
@@ -132,7 +132,7 @@ struct DiskSection: View {
         switch block {
         case .usage: usageBlock(disk: disk, editing: editing)
         case .activity: activityBlock(disk: disk, editing: editing)
-        case .smart: smartBlock(disk: disk, editing: editing)
+        case .smart: ForkDiskHealthFold(disk: disk, editing: editing) { smartBlock(disk: disk, editing: editing) }  // Fork
         case .protection: protectionBlock(disk: disk, editing: editing)
         case .tools: toolsBlock(disk: disk, editing: editing)
         }
@@ -459,6 +459,7 @@ struct DiskSection: View {
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
+                ForkDiskPanelTools()  // Fork
             }
         }
     }

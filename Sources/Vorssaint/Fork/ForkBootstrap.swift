@@ -7,6 +7,10 @@ import AppKit
 /// main.swift, after the command-line modes have had their chance to exit.
 enum ForkBootstrap {
     static func run() {
+        #if VORSSAINT_DEVELOPMENT
+        ForkMissionControlProbe.runIfRequested()  // Developer builds: lot 6 feasibility probe, then quits
+        ForkBluetoothBatteryProbe.runIfRequested()  // Developer builds: lot 8 probe, then quits
+        #endif
         ForkUpstreamServices.keepDisabled()
         ForkCoexistence.shared.start()
         ForkCaptureMenu.shared.start()
@@ -17,8 +21,20 @@ enum ForkBootstrap {
         ForkTitleBarGestures.shared.start()
         ForkSwishArrowHotkeys.shared.start()
         ForkSwishDoubleTap.shared.start()
+        ForkCurrencyAnswer.install()
         ForkDragTopGuard.shared.start()
         ForkTrackpadSwitcher.shared.start()
+        ForkMissionControlPlus.shared.start()
+        ForkChromeFullscreenSwipe.shared.start()
+        ForkBatteryAlerts.shared.start()
+        ForkLidDisplaySleep.shared.start()
+        ForkAmbientPlayer.shared.start()
+        ForkCareAutomation.shared.start()
+        ForkQuickActions.applyDefaultsOnce()
+        ForkTodoist.shared.start()
+        ForkVercel.shared.start()
+        ForkWeather.shared.start()
+        ForkTranslate.shared.start()
     }
 }
 

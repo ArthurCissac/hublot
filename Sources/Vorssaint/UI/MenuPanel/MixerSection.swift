@@ -82,7 +82,7 @@ struct MixerSection: View {
     private var audioDevicesSection: some View {
         VStack(alignment: .leading, spacing: 6) {
             universalOutputPicker
-            systemSoundOutputPicker
+            if !ForkPanelLook.systemSoundsInOptions() { systemSoundOutputPicker }  // Fork: in Options
             microphonePicker
             if let outputSwitchError = mixer.outputSwitchError {
                 inputMessage(String(format: l10n.s.mixerSystemOutputErrorFormat, outputSwitchError),
@@ -112,6 +112,7 @@ struct MixerSection: View {
             .buttonStyle(.plain)
 
             if optionsExpanded {
+                if ForkPanelLook.systemSoundsInOptions() { systemSoundOutputPicker.padding(.leading, 19) }  // Fork
                 MixerOptionsControls(includeSharedAudioFeatures: !settingsMode)
                     .padding(.leading, 19)
             }
@@ -151,7 +152,8 @@ struct MixerSection: View {
                 .labelsHidden()
                 .pickerStyle(.menu)
                 .controlSize(.small)
-                .frame(width: 164)
+                .frame(minWidth: ForkPanelLook.pickerWidth, maxWidth: ForkPanelLook.pickerMaxWidth())  // Fork: full device names
+                .layoutPriority(ForkPanelLook.pickerPriority())
                 .disabled(universalOutputDevices.isEmpty)
                 .help(l10n.s.mixerSystemOutputTooltip)
             }
@@ -230,7 +232,8 @@ struct MixerSection: View {
                 .labelsHidden()
                 .pickerStyle(.menu)
                 .controlSize(.small)
-                .frame(width: 164)
+                .frame(minWidth: ForkPanelLook.pickerWidth, maxWidth: ForkPanelLook.pickerMaxWidth())  // Fork: full device names
+                .layoutPriority(ForkPanelLook.pickerPriority())
                 .disabled(systemSoundOutputDevices.isEmpty)
                 .help(l10n.s.mixerSoundEffectsOutputTooltip)
             }
@@ -320,7 +323,8 @@ struct MixerSection: View {
                 .labelsHidden()
                 .pickerStyle(.menu)
                 .controlSize(.small)
-                .frame(width: 164)
+                .frame(minWidth: ForkPanelLook.pickerWidth, maxWidth: ForkPanelLook.pickerMaxWidth())  // Fork: full device names
+                .layoutPriority(ForkPanelLook.pickerPriority())
                 .disabled(inputManager.inputDevices.isEmpty)
                 .help(l10n.s.mixerInputTooltip)
             }
@@ -820,7 +824,7 @@ struct SoundOutputSwitcherControls: View {
                             Toggle(isOn: selectionBinding(for: device.uid)) {
                                 Text(outputDeviceTitle(device))
                                     .font(.system(size: 10.5))
-                                    .lineLimit(1)
+                                    .lineLimit(ForkPanelLook.deviceLines())  // Fork: full names
                                     .truncationMode(.middle)
                             }
                             .toggleStyle(.checkbox)

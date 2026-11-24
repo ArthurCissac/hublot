@@ -261,6 +261,7 @@ struct ScreenshotEditorView: View {
         .overlay(alignment: .topLeading) {
             textEditorOverlay(zoom: zoom)
         }
+        .overlay(alignment: .topLeading) { ForkCropOverlay(model: model, zoom: zoom, canvasSize: canvasSize) }  // Fork
         .overlay(alignment: .topLeading) {
             cropLoupeOverlay(zoom: zoom, canvasSize: canvasSize)
         }
@@ -466,6 +467,8 @@ struct ScreenshotEditorView: View {
     }
 
     private func updateHoverCursor(at point: CGPoint) {
+        if ForkCropTool.setCursor(tool: model.tool, draft: model.cropDraft, imageSize: model.imageSize,  // Fork: crop grips
+                                  zoom: model.currentDisplayZoom, at: point) { return }
         // The same rule a press follows: a spotlight region offers only its
         // handles and edge while its tool is active, and expanding the canvas
         // never moves a mark.
@@ -609,6 +612,7 @@ struct ScreenshotEditorView: View {
 
     private func drawCropChrome(_ cg: CGContext, canvasSize: CGSize, zoom: CGFloat) {
         guard model.tool == .crop, let draft = model.cropDraft else { return }
+        guard !ForkCropTool.isEnabled else { return }  // Fork: ForkCropOverlay draws the crop
         let scale = model.scale
         let pad = model.backdropPaddingPixels
         cg.setFillColor(CGColor(gray: 0, alpha: 0.45))
@@ -1114,7 +1118,7 @@ struct ScreenshotEditorView: View {
         if model.tool == .expandCanvas {
             expansionControls
         } else if model.tool == .crop, model.cropDraft != nil {
-            cropBar
+            if ForkCropTool.isEnabled { ForkCropBar(model: model, strings: strings) } else { cropBar }  // Fork
         } else {
             styleBar
         }

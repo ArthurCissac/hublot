@@ -27,6 +27,7 @@ struct CleanerSettings: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            ForkCleanerToolsBar()  // Fork: lot 9, the disk map and the antivirus
             if whatsAppEnabled {
                 Picker("", selection: $tool) {
                     Label(l10n.s.cleanerName, systemImage: "sparkles")

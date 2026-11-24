@@ -59,6 +59,7 @@ final class ScreenshotService: ObservableObject {
         if NotchSupport.isEnabled() { ids.formUnion(NotchService.shared.protectedWindowIDs) }
         ids.formUnion(preview?.protectedWindowIDs ?? [])
         ids.formUnion(ForkPreviewCards.shared.windowIDs)  // Fork: card previews stay out of captures
+        ids.formUnion(ForkScrollingControls.shared.windowIDs)  // Fork: so do the scrolling controls
         if let number = QuickToolHUD.currentWindowNumber, number > 0 {
             ids.insert(CGWindowID(number))
         }
@@ -194,6 +195,7 @@ final class ScreenshotService: ObservableObject {
         scrollingFinishSignal = nil
         scrollingRegionGuide.hide()
         QuickToolHUD.dismissScrollingCapture()
+        ForkScrollingControls.shared.dismiss()  // Fork: on teardown
         invalidateLatestCaptureUploads()
         preview?.close()
         preview = nil
@@ -291,6 +293,7 @@ final class ScreenshotService: ObservableObject {
     private func captureScrolling(_ region: RecorderSupport.Region) {
         guard scrollingTask == nil else { return }
         let automatic = UserDefaults.standard.bool(forKey: DefaultsKey.screenshotScrollingAutoScroll)
+            && !ForkScrollingControls.isEnabled  // Fork: the pointer steers the auto-scroll instead
         if automatic, !Permissions.shared.accessibility {
             Permissions.shared.requestAccessibility()
             return
@@ -312,6 +315,8 @@ final class ScreenshotService: ObservableObject {
             avoiding: automatic ? CGPoint(x: region.anchorRect.midX, y: region.anchorRect.midY) : nil,
             onFinish: { finishSignal.request() },
             onCancel: { [weak self] in self?.scrollingTask?.cancel() })
+        ForkScrollingControls.shared.show(region: region, onFinish: { finishSignal.request() },  // Fork
+                                          onCancel: { [weak self] in self?.scrollingTask?.cancel() })
         // Read after the controls are on screen so their window is protected,
         // and once for the whole run: the picture must not change halfway.
         let protectedIDs = protectedWindowIDs
@@ -328,6 +333,7 @@ final class ScreenshotService: ObservableObject {
                 autoScroll: scroller,
                 onProgress: { height in
                     QuickToolHUD.updateScrollingCapture(height: height)
+                    ForkScrollingControls.shared.update(height: height)  // Fork
                 })
             guard self.scrollingCaptureID == captureID else { return }
             self.scrollingCaptureID = nil
@@ -335,6 +341,7 @@ final class ScreenshotService: ObservableObject {
             self.scrollingFinishSignal = nil
             self.scrollingRegionGuide.hide()
             QuickToolHUD.dismissScrollingCapture()
+            ForkScrollingControls.shared.dismiss()  // Fork: when the capture ends
             switch result {
             case .success(let capture):
                 self.route(capture)

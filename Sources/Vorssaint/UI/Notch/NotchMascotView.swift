@@ -66,6 +66,7 @@ final class NotchMascotRig: NSObject {
     /// Blinks wait until a visit has gone by.
     private var blinksResume: CFTimeInterval = 0
     private var configured = false
+    let forkDecor = ForkMascotDecor()  // Fork: a livelier companion
 
     override init() {
         super.init()
@@ -84,6 +85,7 @@ final class NotchMascotRig: NSObject {
         }
         shine.fillColor = NotchMascotColor.shine.cgColor
         visor.fillColor = NotchMascotColor.visor.cgColor
+        forkDecor.connect(rig: self, hopper: hopper, squasher: squasher, tilter: tilter, body: fill, outline: fillMask) { [weak self] in self?.flashFace($0, duration: $1, key: "forkFlash") }  // Fork
     }
 
     private static let noActions: [String: CAAction] = [
@@ -161,6 +163,7 @@ final class NotchMascotRig: NSObject {
         rightEye.frame = CGRect(x: face.rightEye.x * size - side / 2, y: face.rightEye.y * size - side / 2, width: side, height: side)
         leftEye.contentsScale = scale
         rightEye.contentsScale = scale
+        forkDecor.configure(size: size, scale: scale)  // Fork
         apply(mood.expression, animated: false)
     }
 
@@ -170,6 +173,7 @@ final class NotchMascotRig: NSObject {
         guard mood != self.mood else { return }
         let previous = self.mood
         self.mood = mood
+        forkDecor.moodChanged(mood)  // Fork
         dozed = false
         if mood != .sleepy { blinks = 0 }
         apply(mood.expression, animated: animated && !reduceMotion)
@@ -496,6 +500,7 @@ final class NotchMascotRig: NSObject {
     /// Reduce Motion it only changes face.
     func react(_ reaction: NotchMascotReaction, lift: CGFloat) {
         guard size > 0 else { return }
+        forkDecor.reacted(reaction)  // Fork: confetti for the day's last task
         // Whatever it is, it wakes up for it.
         if dozed, reaction != .wakeUp { setMood(.idle, animated: !reduceMotion) }
         blinks = 0
@@ -817,6 +822,7 @@ final class NotchMascotRig: NSObject {
         guard finished, relay === blinkRelay, idles else { return }
         blinkRelay = nil
         blinks += 1
+        if ForkMascotLifeLogic.actsIn(mood), !reduceMotion, let length = forkDecor.idleBeat() { pauseBlinking(for: length, from: nil); return }  // Fork: an idle activity now and then
         // A long rest makes its eyes heavy, and it stops blinking then.
         if mood == .idle, blinks >= NotchMascotSupport.blinksBeforeSleep(hour: Calendar.current.component(.hour, from: Date())) {
             setMood(.sleepy, animated: true)
@@ -861,6 +867,7 @@ final class NotchMascotHostView: NSView {
         didSet {
             guard followsPointer != oldValue else { return }
             updateTrackingAreas()
+            forkGaze.sync(host: self, on: followsPointer)  // Fork: eyes follow the pointer near the island
             if !followsPointer { mascot.lookAhead() }
         }
     }
@@ -873,6 +880,7 @@ final class NotchMascotHostView: NSView {
     private var lastPetting: CFTimeInterval = 0
     /// A cameo's reaction, waiting for it to land.
     private var cameoWork: DispatchWorkItem?
+    private let forkGaze = ForkMascotGaze()  // Fork
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
@@ -1022,6 +1030,7 @@ final class NotchMascotHostView: NSView {
             self.pettingWork = nil
             self.lastPetting = CACurrentMediaTime()
             self.mascot.react(.love, lift: 0)
+            ForkMascotLife.notePetted()  // Fork
             // A soft tick under a finger on the trackpad, as the hearts come.
             if NotchSupport.usesHapticFeedback() {
                 NSHapticFeedbackManager.defaultPerformer.perform(.generic, performanceTime: .now)
@@ -1201,6 +1210,7 @@ struct NotchMascotView: NSViewRepresentable {
         view.followsDrag = followsDrag
         view.configure(look: look, size: size, mood: mood, idles: idles,
                        reduceMotion: context.environment.accessibilityReduceMotion, animated: false)
+        view.mascot.forkDecor.variantOverride = context.environment.forkMascotVariant  // Fork: a preview's own style
         if let reaction {
             // Small in a notice, it hops a little higher for its size to read.
             view.react(NotchMascotReactionEvent(id: UUID(), reaction: reaction, start: CACurrentMediaTime()),
@@ -1212,6 +1222,7 @@ struct NotchMascotView: NSViewRepresentable {
     func updateNSView(_ view: NotchMascotHostView, context: Context) {
         view.configure(look: look, size: size, mood: mood, idles: idles,
                        reduceMotion: context.environment.accessibilityReduceMotion, animated: true)
+        view.mascot.forkDecor.variantOverride = context.environment.forkMascotVariant  // Fork: kept as it updates
         view.place(at: nil, visible: nil)
         if let cue { view.play(cue, id: cueID) }
     }
@@ -1260,7 +1271,7 @@ struct NotchMascotTrackView: NSViewRepresentable {
         view.yieldsToActivities = yieldsToActivities
         // A countdown is watched from the camera's left whatever the side.
         let stand = visit?.kind.watchesTimer == true ? track.leftSide.rest : track.rest
-        view.playVisit(visit, path: NotchMascotMotion.path(for: visit?.kind ?? .pass, on: track),
+        view.playVisit(visit, path: ForkMascotLife.path(for: visit, base: NotchMascotMotion.path(for: visit?.kind ?? .pass, on: track), track: track),  // Fork
                        baseline: track.baseline, stand: CGPoint(x: stand, y: track.baseline),
                        lift: track.hop(0.22))
         if rests { view.react(reaction, lift: track.hop(0.22)) }

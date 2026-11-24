@@ -32,6 +32,9 @@ struct ForkCaptureSettingsPage: View {
     @AppStorage(DefaultsKey.screenshotDelay) private var delay = 0
     @AppStorage(DefaultsKey.screenshotFreeze) private var freeze = true
     @AppStorage(DefaultsKey.screenshotShowLastRegion) private var showLastRegion = true
+    @AppStorage(DefaultsKey.forkScrollingControls) private var scrollingControls = true
+    @AppStorage(DefaultsKey.forkScrollingHorizontal) private var scrollingHorizontal = false
+    @AppStorage(DefaultsKey.forkEditorCrop) private var simplerCrop = true
     @AppStorage(DefaultsKey.forkRecorderDoNotDisturb) private var doNotDisturb = true
     @AppStorage(DefaultsKey.forkWindowCaptureStyle) private var windowStyle = ForkWindowCaptureStyle.Mode.shadow.rawValue
     @AppStorage(DefaultsKey.forkRecorderShowsKeys) private var showsKeys = false
@@ -68,6 +71,15 @@ struct ForkCaptureSettingsPage: View {
             Toggle(text.settingsLastRegion, isOn: $showLastRegion)
         } header: {
             Text(text.settingsDuringSelection)
+        }
+        Section {
+            let scrolling = ForkScrollingStrings.current
+            Toggle(scrolling.controlsToggle, isOn: $scrollingControls)
+            caption(scrolling.controlsCaption)
+            Toggle(scrolling.horizontalToggle, isOn: $scrollingHorizontal)
+            caption(scrolling.horizontalCaption)
+        } header: {
+            Text(ForkScrollingStrings.current.section)
         }
         Section {
             recording(text)
@@ -112,7 +124,10 @@ struct ForkCaptureSettingsPage: View {
     private func afterCapture(_ text: ForkStrings) -> some View {
         Toggle(text.previewCardToggle, isOn: $previewCard)
         caption(text.previewCardCaption)
+        if previewCard { ForkPreviewShortcutRows() }
         Toggle(text.captureSoundToggle, isOn: $captureSound)
+        Toggle(ForkCropStrings.current.settingsToggle, isOn: $simplerCrop)
+        caption(ForkCropStrings.current.settingsCaption)
         ScreenshotDefaultActionPicker(strings: FeatureStrings.screenshot(l10n.language), selection: $defaultAction)
         caption(text.settingsDefaultActionCaption(AppInfo.name))
         LabeledContent(text.settingsFolder) {

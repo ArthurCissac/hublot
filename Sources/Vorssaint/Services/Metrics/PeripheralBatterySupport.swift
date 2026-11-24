@@ -323,6 +323,7 @@ enum PeripheralBatterySupport {
     }
 
     static func menuBarMetric(for devices: [PeripheralBatteryDevice]) -> (label: String, value: String)? {
+        if let pinned = ForkBatteryLogic.pinnedMetric(devices: devices, pinned: UserDefaults.standard.string(forKey: DefaultsKey.forkPinnedBatteryDevice) ?? "") { return pinned }  // Fork: lot 8
         let devices = sorted(devices)
         guard let first = devices.first else { return nil }
         let extra = devices.count > 1 ? "+\(min(9, devices.count - 1))" : ""

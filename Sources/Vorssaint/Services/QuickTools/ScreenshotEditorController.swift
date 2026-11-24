@@ -42,6 +42,7 @@ final class ScreenshotEditorModel: ObservableObject, BackdropEditing {
                 selectedID = nil
                 cropDraft = CGRect(origin: .zero, size: imageSize)
             } else if oldValue == .crop {
+                ForkCropTool.commitOnLeave(self, draft: cropDraft, next: tool)  // Fork: leaving the crop tool applies it
                 cropDraft = nil
                 cropLoupePoint = nil
             }
@@ -840,7 +841,8 @@ final class ScreenshotEditorModel: ObservableObject, BackdropEditing {
         case .crop:
             let bounds = CGRect(origin: .zero, size: imageSize)
             if let draft = cropDraft,
-               let handle = ScreenshotSupport.handle(at: point, rect: draft,
+               let handle = ForkCropTool.handle(at: point, rect: draft, zoom: currentDisplayZoom)  // Fork: grips sized on screen
+                   ?? ScreenshotSupport.handle(at: point, rect: draft,
                                                      tolerance: 14 * scale) {
                 activeHandle = handle
                 cropResizeOrigin = draft
@@ -934,13 +936,15 @@ final class ScreenshotEditorModel: ObservableObject, BackdropEditing {
         case .crop:
             let bounds = CGRect(origin: .zero, size: imageSize)
             if let handle = activeHandle, let origin = cropResizeOrigin {
-                let rect = ScreenshotSupport.resizedRect(origin, dragging: handle, to: point)
+                let rect = ForkCropTool.resized(origin, dragging: handle, to: point, imageSize: imageSize)  // Fork: ratio, Shift
+                    ?? ScreenshotSupport.resizedRect(origin, dragging: handle, to: point)
                 let snapped = ScreenshotSupport.pixelSnappedCropRect(rect, within: bounds)
                 cropDraft = snapped
                 cropLoupePoint = handle.position(in: snapped)
             } else if cropSelectionOrigin != nil {
                 cropDraft = ScreenshotSupport.pixelSnappedCropRect(
-                    ScreenshotSupport.selectionRect(from: dragStart, to: point),
+                    ForkCropTool.drawn(from: dragStart, to: point, imageSize: imageSize)  // Fork: ratio
+                        ?? ScreenshotSupport.selectionRect(from: dragStart, to: point),
                     within: bounds)
             } else if let origin = cropMoveOrigin {
                 let delta = CGPoint(x: point.x - dragStart.x, y: point.y - dragStart.y)
@@ -1078,6 +1082,10 @@ final class ScreenshotEditorModel: ObservableObject, BackdropEditing {
         case .select:
             finishSelectDrag(at: point, isTap: isTap)
         case .crop:
+            if ForkCropTool.endDrag(at: point, isTap: isTap, draft: cropDraft, imageSize: imageSize) {  // Fork: double click
+                applyCrop()
+                return
+            }
             if isTap, let origin = cropSelectionOrigin {
                 cropDraft = origin
             }
@@ -1615,6 +1623,7 @@ final class ScreenshotEditorController: NSObject, NSWindowDelegate {
             if model.tool == .expandCanvas {
                 model.leaveCanvasExpansion()
             } else if model.tool == .crop, model.cropDraft != nil {
+                model.cropDraft = nil  // Fork: Escape leaves the picture as it was; another tool applies the crop
                 model.tool = .select
             } else if !model.selectedWordIndexes.isEmpty {
                 model.clearTextSelection()

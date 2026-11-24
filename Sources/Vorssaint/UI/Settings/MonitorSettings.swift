@@ -65,6 +65,7 @@ struct MonitorSettings: View {
                     groupHeading(FeatureStrings.monitorLayout(l10n.language).shared, symbol: "slider.horizontal.3")
                     readingsCard
                     alertsCard.settingsSectionAnchor(.monitorAlerts, cornerRadius: 16)
+                    ForkBatterySettingsCard()  // Fork: lot 8, battery alerts and the pinned device
                 }
                 .frame(maxWidth: 760)
                 .frame(maxWidth: .infinity)

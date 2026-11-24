@@ -48,6 +48,64 @@ extension DefaultsKey {
     static let forkDragTopGuard = "forkDragTopGuard"
     /// Scrolling captures from the capture menu go sideways.
     static let forkScrollingHorizontal = "forkScrollingHorizontal"
+    /// Scrolling captures show the fork's controls, with an auto-scroll steered by the pointer.
+    static let forkScrollingControls = "forkScrollingControls"
+    /// The editor's crop has large grips, ratios and the thirds (ForkCropTool).
+    static let forkEditorCrop = "forkEditorCrop"
+    /// Mission Control shows a × on the window under the pointer; ⌘W, ⌘H and ⌘Q act on it.
+    static let forkMissionControlPlus = "forkMissionControlPlus"
+    /// Three fingers down in Chrome leave a video's full screen, and bring it back.
+    static let forkChromeFullscreenSwipe = "forkChromeFullscreenSwipe"
+    /// Battery alerts at several levels, with a banner and a sound (lot 8).
+    static let forkBatteryAlerts = "forkBatteryAlerts"
+    /// The low battery alerts come with a coloured halo round the screens.
+    static let forkBatteryHalo = "forkBatteryHalo"
+    /// A sound when the charger is plugged in or out.
+    static let forkPowerSounds = "forkPowerSounds"
+    /// The device whose battery the menu bar shows, by name; empty for the lowest.
+    static let forkPinnedBatteryDevice = "forkPinnedBatteryDevice"
+    /// The Cleaner page offers the disk map and the antivirus (lot 9).
+    static let forkCleanerTools = "forkCleanerTools"
+    /// The maintenance jobs checked, by name (lot 9d).
+    static let forkMaintenanceSelection = "forkMaintenanceSelection"
+    /// When each maintenance job last went well, seconds since 1970 by name.
+    static let forkMaintenanceLastRuns = "forkMaintenanceLastRuns"  // not registered
+    /// Background sound: offered at all, its mix, its volume, its timer in
+    /// minutes (0 never stops), its menu bar icon and its global shortcut.
+    static let forkAmbientEnabled = "forkAmbientEnabled"
+    static let forkAmbientMix = "forkAmbientMix"
+    /// Named mixes kept by the user, as JSON (ForkAmbientLogic.Favorite).
+    static let forkAmbientFavorites = "forkAmbientFavorites"
+    /// Plays for a time (timer) or in Pomodoro cycles, and their work length in minutes.
+    static let forkAmbientMode = "forkAmbientMode"
+    static let forkAmbientPomodoroMinutes = "forkAmbientPomodoroMinutes"
+    /// The sound holds during calls and while music plays.
+    static let forkAmbientPauseForCalls = "forkAmbientPauseForCalls"
+    static let forkAmbientPauseForMusic = "forkAmbientPauseForMusic"
+    /// The closed island shows a wave while the sound plays.
+    static let forkAmbientIslandActivity = "forkAmbientIslandActivity"
+    /// The closed island draws a little scene for what plays, rather than the wave.
+    static let forkAmbientScenes = "forkAmbientScenes"
+    static let forkAmbientVolume = "forkAmbientVolume"
+    static let forkAmbientTimer = "forkAmbientTimer"
+    static let forkAmbientMenuBarIcon = "forkAmbientMenuBarIcon"
+    static let forkAmbientShortcutEnabled = "forkAmbientShortcutEnabled"
+    static let forkAmbientShortcut = "forkAmbientShortcut"
+    /// The island control was taken off the hidden controls once.
+    static let forkAmbientIslandShown = "forkAmbientIslandShown"  // not registered
+    /// The antivirus checks for new signatures once a day, in the background.
+    static let forkAntivirusAutoUpdate = "forkAntivirusAutoUpdate"
+    /// When a signature check last succeeded, found something or not.
+    static let forkAntivirusLastCheck = "forkAntivirusLastCheck"  // not registered
+    /// Each finished new item of Downloads is scanned by the antivirus.
+    static let forkAntivirusWatchDownloads = "forkAntivirusWatchDownloads"
+    /// The one-click scan runs by itself: "off", "weekly" or "daily".
+    static let forkSmartScanSchedule = "forkSmartScanSchedule"
+    /// Its day (the Gregorian weekday, 1 for Sunday) and its hour.
+    static let forkSmartScanWeekday = "forkSmartScanWeekday"
+    static let forkSmartScanHour = "forkSmartScanHour"
+    /// When the schedule last ran a scan, or last changed.
+    static let forkSmartScanLastAuto = "forkSmartScanLastAuto"  // not registered
     /// The format the capture menu holds its area to, as an index in its list.
     static let forkCaptureMenuFormat = "forkCaptureMenuFormat"
     /// The last area framed, in global points. A place on this Mac's displays.
@@ -55,6 +113,11 @@ extension DefaultsKey {
     /// The shortcut that brings back the last capture card put away.
     static let forkReopenPreviewShortcutEnabled = "forkReopenPreviewShortcutEnabled"
     static let forkReopenPreviewShortcut = "forkReopenPreviewShortcut"
+    /// A global shortcut hides every capture preview card, and shows them again.
+    static let forkHidePreviewsShortcutEnabled = "forkHidePreviewsShortcutEnabled"
+    static let forkHidePreviewsShortcut = "forkHidePreviewsShortcut"
+    /// How many fingers the trackpad switcher gesture takes: 3 or 4.
+    static let forkSwitcherTrackpadFingers = "forkSwitcherTrackpadFingers"
     /// Export a recording's sound in mono rather than in stereo.
     static let forkRecorderMonoAudio = "forkRecorderMonoAudio"
     /// Show a ring on each click in new recordings.
@@ -110,4 +173,74 @@ extension DefaultsKey {
     /// The client ID of the user's own app on developer.spotify.com. Public, not a secret
     /// (PKCE): the tokens it obtains live in the Keychain only, never in preferences.
     static let forkSpotifyClientID = "forkSpotifyClientID"
+    /// The menu bar panel's simple menus: named tabs, tiles, state first, only what is of use.
+    static let forkSimplePanels = "forkSimplePanels"
+    /// The companion's idle activities, varied visits, wandering eyes and mood.
+    static let forkMascotLively = "forkMascotLively"
+    /// The companion follows the day: props by hour, season and focus, Todoist cheers and worries.
+    static let forkMascotDay = "forkMascotDay"
+    /// The minimal companion as a cat, a ghost, a pixel one or a blob ("classic" otherwise).
+    static let forkMascotVariant = "forkMascotVariant"
+    /// Rare speech bubbles, a mini keyboard while typing fast, the weather of a city.
+    static let forkMascotBubbles = "forkMascotBubbles"
+    static let forkMascotTyping = "forkMascotTyping"
+    static let forkMascotWeather = "forkMascotWeather"
+    static let forkMascotWeatherCity = "forkMascotWeatherCity"
+    /// The day it last said hello.
+    static let forkMascotGreetedDay = "forkMascotGreetedDay"  // not registered
+    /// How much it was petted lately (0 to 100), and when that was last updated.
+    static let forkMascotAffection = "forkMascotAffection"  // not registered
+    static let forkMascotAffectionDate = "forkMascotAffectionDate"  // not registered
+    /// Todoist's tasks in the island and the menu (the token lives in the Keychain).
+    /// Vercel's deployments in the island (the token lives in the Keychain).
+    static let forkVercelEnabled = "forkVercelEnabled"
+    /// "all" (production and previews) or "production".
+    static let forkVercelScope = "forkVercelScope"
+    static let forkVercelNotifySuccess = "forkVercelNotifySuccess"
+    static let forkVercelNotifyFailure = "forkVercelNotifyFailure"
+    static let forkTodoistEnabled = "forkTodoistEnabled"
+    /// Control-Option-N opens the tasks' panel; the shortcut itself, when changed.
+    static let forkTodoistShortcutEnabled = "forkTodoistShortcutEnabled"
+    static let forkTodoistShortcut = "forkTodoistShortcut"  // not registered
+    /// The island's Weather page, its cities (JSON) and its ⌃⌥W shortcut.
+    static let forkWeatherEnabled = "forkWeatherEnabled"
+    static let forkWeatherCities = "forkWeatherCities"
+    static let forkWeatherShortcutEnabled = "forkWeatherShortcutEnabled"
+    static let forkWeatherShortcut = "forkWeatherShortcut"  // not registered
+    /// The closed island shows the task being done, or a timed task near its time.
+    static let forkTodoistIslandActivity = "forkTodoistIslandActivity"
+    /// How many minutes before its time a task comes into the closed island (5, 15, 30 or 60).
+    static let forkTodoistIslandLead = "forkTodoistIslandLead"
+    /// A task with a time is recalled in the island when it comes.
+    static let forkTodoistReminders = "forkTodoistReminders"
+    /// The task being done now, pinned first; kept on this Mac only.
+    static let forkTodoistActiveTask = "forkTodoistActiveTask"  // not registered
+    /// The fork's quick action tiles taken off the menu, comma-separated.
+    static let forkQuickActionsHidden = "forkQuickActionsHidden"
+    /// The menu's tiles in the order arranged by hand, the fork's and upstream's mixed (ForkTileLayoutLogic).
+    static let forkTileOrder = "forkTileOrder"
+    /// The tiles' first setup (three of upstream's hidden) was done.
+    static let forkQuickActionsSetUp = "forkQuickActionsSetUp"  // not registered
+    /// What presentation mode changed, to put back; absent when it is off.
+    static let forkPresentationSnapshot = "forkPresentationSnapshot"  // not registered
+    /// Closing the lid in Keep Awake's closed-lid mode puts every display to
+    /// sleep, the external ones included.
+    static let forkLidSleepsDisplays = "forkLidSleepsDisplays"
+    /// Dev server ports show a button with a QR code that opens them on a phone.
+    static let forkLocalQREnabled = "forkLocalQREnabled"
+    /// The command bar converts currencies with the European Central Bank's rates.
+    static let forkCurrencyEnabled = "forkCurrencyEnabled"
+    /// The currency an amount becomes when no target is typed ("1500 $").
+    static let forkCurrencyTarget = "forkCurrencyTarget"
+    /// While the island shows the volume, the volume keys move it in round steps of 5 %.
+    static let forkVolumeRoundSteps = "forkVolumeRoundSteps"
+    /// While the island shows the brightness, the brightness keys move it in round steps of 5 %.
+    static let forkBrightnessRoundSteps = "forkBrightnessRoundSteps"
+    /// The selected text, or the clipboard's, translated in a panel under the island.
+    static let forkTranslateEnabled = "forkTranslateEnabled"
+    /// Control-Option-Command-T translates; the shortcut itself, when changed.
+    static let forkTranslateShortcutEnabled = "forkTranslateShortcutEnabled"
+    static let forkTranslateShortcut = "forkTranslateShortcut"  // not registered
+    /// The tool last shown in the Care window, to reopen it there.
+    static let forkCareHubModule = "forkCareHubModule"  // not registered
 }

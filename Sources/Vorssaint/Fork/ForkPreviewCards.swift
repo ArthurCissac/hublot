@@ -16,7 +16,7 @@ typealias ForkPreviewAction = ScreenshotQuickPreviewController.Action
 /// together with the closure that runs its actions, so copy, save, edit, pin
 /// and discard stay upstream's own. Used from the main thread only, like the
 /// capture workflow that calls it.
-final class ForkPreviewCards {
+final class ForkPreviewCards: ObservableObject {
     static let shared = ForkPreviewCards()
 
     private var cards: [ForkPreviewCardController] = []
@@ -25,6 +25,9 @@ final class ForkPreviewCards {
     /// The last card put away, for the reopen shortcut. One picture, replaced by the next.
     private var lastClosed: ScreenshotSelectionController.Capture?
     private let reopenHotkey = QuickToolHotkey(id: 9_102)
+    private let hideHotkey = QuickToolHotkey(id: 9_103)
+    /// Whether the cards are hidden by the hide shortcut, all of them.
+    private var hidden = false
     private lazy var resync = ForkCoalescedMainAction { [weak self] in self?.syncWithPreferences() }
 
     static func isEnabled(in defaults: UserDefaults = .standard) -> Bool {
@@ -68,6 +71,7 @@ final class ForkPreviewCards {
     /// Registers the reopen shortcut, as the capture menu does its own.
     func start() {
         reopenHotkey.onPress = { [weak self] in self?.reopen() }
+        hideHotkey.onPress = { [weak self] in self?.toggleHidden() }
         DispatchQueue.main.async { [weak self] in self?.syncWithPreferences() }
         for name in [UserDefaults.didChangeNotification,
                      NSApplication.didBecomeActiveNotification,
@@ -85,8 +89,33 @@ final class ForkPreviewCards {
             && Self.isEnabled(in: defaults) && AppFeature.screenshot.isAvailable
         let shortcut = GlobalShortcut.saved(for: DefaultsKey.forkReopenPreviewShortcut,
                                             fallback: ForkPreviewCardGestures.reopenShortcut)
-        _ = reopenHotkey.sync(enabled: enabled, shortcut: shortcut, storageKey: DefaultsKey.forkReopenPreviewShortcut)
+        let registered = reopenHotkey.sync(enabled: enabled, shortcut: shortcut, storageKey: DefaultsKey.forkReopenPreviewShortcut)
         if !enabled { lastClosed = nil }
+        let hideEnabled = defaults.bool(forKey: DefaultsKey.forkHidePreviewsShortcutEnabled)
+            && Self.isEnabled(in: defaults) && AppFeature.screenshot.isAvailable
+        let hideShortcut = GlobalShortcut.saved(for: DefaultsKey.forkHidePreviewsShortcut,
+                                                fallback: ForkPreviewCardGestures.hideShortcut)
+        let hideRegistered = hideHotkey.sync(enabled: hideEnabled, shortcut: hideShortcut,
+                                             storageKey: DefaultsKey.forkHidePreviewsShortcut)
+        if !hideEnabled, hidden { toggleHidden() }
+        let failed = Set([(enabled && !registered) ? DefaultsKey.forkReopenPreviewShortcut : nil,
+                          (hideEnabled && !hideRegistered) ? DefaultsKey.forkHidePreviewsShortcut : nil].compactMap { $0 })
+        if failed != unavailableShortcuts { unavailableShortcuts = failed }
+    }
+
+    /// The preference keys of the shortcuts macOS refused (another app holds them).
+    @Published private(set) var unavailableShortcuts: Set<String> = []
+
+    /// Every card out of the way, or all of them back.
+    private func toggleHidden() {
+        guard hidden || !cards.isEmpty else {
+            QuickToolHUD.show(icon: "rectangle.stack", message: ForkPreviewStrings.current.noneToHide)
+            return
+        }
+        hidden.toggle()
+        cards.forEach { $0.setHidden(hidden) }
+        let text = ForkPreviewStrings.current
+        QuickToolHUD.show(icon: hidden ? "eye.slash" : "eye", message: hidden ? text.hidden : text.shown)
     }
 
     /// The last card put away comes back, through upstream's own preview path.
@@ -106,6 +135,11 @@ final class ForkPreviewCards {
                                                      capacity: ForkPreviewCardLayout.capacity(in: screen)))
         // The stack lives on one display: the pointer's.
         stackScreen = screen
+        // A new capture brings the hidden cards back with it.
+        if hidden {
+            hidden = false
+            cards.forEach { $0.setHidden(false) }
+        }
         card.onClose = { [weak self] closed in self?.remove(closed) }
         cards.append(card)
         settle()
@@ -257,6 +291,17 @@ final class ForkPreviewCardController {
                        display: false)
         panel.orderFrontRegardless()
         slideIn(panel, to: frame)
+    }
+
+    /// Out of sight and back, in place: the card keeps its place in the stack.
+    func setHidden(_ hidden: Bool) {
+        guard let panel, !closed else { return }
+        if hidden {
+            panel.orderOut(nil)
+        } else {
+            panel.alphaValue = 1
+            panel.orderFrontRegardless()
+        }
     }
 
     /// Slides to another place in the stack on the same display.

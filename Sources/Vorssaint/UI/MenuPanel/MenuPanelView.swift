@@ -208,8 +208,8 @@ struct MenuPanelView: View {
         VStack(alignment: .leading, spacing: 12) {
             UpdateBanner()
                 .reportHeight($updateBannerHeight)
-            header
-            sectionNavigation
+            if !ForkPanelLook.hidesLogo() { header }  // Fork: no logo in the simple menus
+            ForkPanelTabs(sections: visibleSections, active: activeSection, select: { selectedSection = $0; focusedSection = $0 }) { sectionNavigation }  // Fork
 
             OverlayScrollView(measuredHeight: $navigableContentHeight) {
                 VStack(alignment: .leading, spacing: 12) {
@@ -287,7 +287,7 @@ struct MenuPanelView: View {
         let bannerHeight = updates.state.showsMenuPanelBanner
             ? (max(updateBannerHeight, 48) + 12)
             : 0
-        return 180 + bannerHeight
+        return 180 - ForkPanelLook.chromeSaving() + bannerHeight  // Fork: no logo
     }
 
     private var estimatedNavigableContentHeight: CGFloat {
@@ -2749,6 +2749,7 @@ struct KeepAwakeCard: View {
         // first row is just the live status and the on/off switch.
         PanelSection(.keepAwake, title: l10n.s.keepAwakeTitle, collapsible: collapsible) {
             VStack(alignment: .leading, spacing: 10) {
+                ForkKeepAwakeTop {  // Fork: the state first, one row of durations
                 HStack {
                     if awake.isActive, awake.endDate != nil {
                         // Beside the extend chips a narrow panel has no room for the
@@ -2814,6 +2815,7 @@ struct KeepAwakeCard: View {
                             .foregroundStyle(.tertiary)
                     }
                 }
+                }  // Fork: end of ForkKeepAwakeTop
 
                 optionsDisclosure
 
@@ -2824,6 +2826,7 @@ struct KeepAwakeCard: View {
                           isOn: $awake.clamshellPreferred,
                           disabled: awake.clamshellSetupInProgress,
                           captionIsError: awake.clamshellSetupFailed)
+                ForkLidDisplaySleepMenuRow(clamshellPreferred: awake.clamshellPreferred)  // Fork
             }
             .panelCard()
         }
