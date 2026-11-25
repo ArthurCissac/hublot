@@ -6,8 +6,9 @@ import CoreGraphics
 /// The capture menu: its shortcut opens a selection; the area drawn is kept on
 /// screen, framed, with a bar under it, and the bar's buttons decide what is
 /// done with that area. A recording opens a short bar of its own first, with
-/// its options and a start button; a scrolling capture starts as soon as its
-/// area is drawn, its window clicked, or Return takes the whole display.
+/// its options and a start button; a scrolling capture starts at once on the
+/// area framed, or, with none, as soon as its area is drawn, its window
+/// clicked, or Return takes the whole display.
 ///
 /// The proportions were measured on the reference app's all-in-one bar (see
 /// docs/reference/cleanshot-x.md); the drawing and the wording are the fork's.
@@ -15,8 +16,9 @@ import CoreGraphics
 enum ForkCaptureMenuLayout {
     /// Everything a bar can show: the main bar's seven items, then the items
     /// of the recording bar. A scrolling capture has no bar of its own: it
-    /// draws its area, or takes the window clicked or the whole display, and
-    /// starts at once, its controls on its own strip (ForkScrollingControls).
+    /// takes the area framed, or with none draws its area, or takes the window
+    /// clicked or the whole display, and starts at once, its controls on its
+    /// own strip (ForkScrollingControls).
     enum Mode: CaseIterable {
         case area, fullScreen, window, scrolling, timer, text, recording
         case record, microphone, systemAudio, mono, clicks, keys, camera, cameraShape, countdown, back

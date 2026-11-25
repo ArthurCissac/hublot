@@ -26,6 +26,8 @@ struct ForkCaptureSettingsPage: View {
     @AppStorage(DefaultsKey.forkScreenshotCaptureSound) private var captureSound = true
     @AppStorage(DefaultsKey.screenshotDefaultAction) private var defaultAction = ""
     @AppStorage(DefaultsKey.screenshotSaveFolder) private var saveFolder = ""
+    /// The recordings' own folder; empty, they follow the captures' one (ForkRecorderOptions.saveFolder).
+    @AppStorage(DefaultsKey.recorderSaveFolder) private var recordingFolder = ""
     @AppStorage(DefaultsKey.forkScreenshotExcludeDesktopIcons) private var excludeDesktopIcons = true
     @AppStorage(DefaultsKey.screenshotIncludePointer) private var includePointer = false
     @AppStorage(DefaultsKey.screenshotHideVorssaintWindows) private var hideOwnWindows = true
@@ -140,6 +142,9 @@ struct ForkCaptureSettingsPage: View {
             }
         }
         caption(text.settingsFolderCaption)
+        if !recordingFolder.isEmpty, expanded(recordingFolder) != expanded(saveFolder) {
+            caption(text.settingsRecordingFolderOwn(displayName(ofFolder: recordingFolder)))
+        }
     }
 
     @ViewBuilder
@@ -207,10 +212,18 @@ struct ForkCaptureSettingsPage: View {
     /// The folder as Finder names it. An empty preference is upstream's
     /// default, the Desktop.
     private var folderName: String {
+        displayName(ofFolder: saveFolder)
+    }
+
+    private func expanded(_ stored: String) -> String {
+        URL(fileURLWithPath: (stored as NSString).expandingTildeInPath).standardizedFileURL.path
+    }
+
+    private func displayName(ofFolder stored: String) -> String {
         let manager = FileManager.default
-        let path = saveFolder.isEmpty
+        let path = stored.isEmpty
             ? (manager.urls(for: .desktopDirectory, in: .userDomainMask).first?.path ?? NSHomeDirectory())
-            : (saveFolder as NSString).expandingTildeInPath
+            : (stored as NSString).expandingTildeInPath
         return manager.displayName(atPath: path)
     }
 
@@ -225,6 +238,8 @@ struct ForkCaptureSettingsPage: View {
         }
         if panel.runModal() == .OK, let url = panel.url {
             saveFolder = url.path
+            // One folder for both: the recordings drop a folder of their own and follow this one.
+            recordingFolder = ""
         }
     }
 }

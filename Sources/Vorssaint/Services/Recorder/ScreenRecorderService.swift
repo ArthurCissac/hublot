@@ -734,7 +734,7 @@ final class ScreenRecorderService: ObservableObject {
                                 fileExtension: String) -> URL {
         let manager = FileManager.default
         var folder: URL?
-        let stored = UserDefaults.standard.string(forKey: DefaultsKey.recorderSaveFolder) ?? ""
+        let stored = ForkRecorderOptions.saveFolder()  // Fork: the captures' folder when recordings have none
         if !stored.isEmpty {
             let expanded = (stored as NSString).expandingTildeInPath
             var isDirectory: ObjCBool = false

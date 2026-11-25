@@ -214,8 +214,9 @@ struct ScreenRecordingCaptureSettings: View {
 
     private var currentFolderName: String {
         let manager = FileManager.default
-        if !saveFolder.isEmpty {
-            let expanded = (saveFolder as NSString).expandingTildeInPath
+        let stored = ForkRecorderOptions.saveFolder(recorder: saveFolder)  // Fork: the captures' folder when empty
+        if !stored.isEmpty {
+            let expanded = (stored as NSString).expandingTildeInPath
             var isDirectory: ObjCBool = false
             if manager.fileExists(atPath: expanded, isDirectory: &isDirectory), isDirectory.boolValue {
                 return manager.displayName(atPath: expanded)

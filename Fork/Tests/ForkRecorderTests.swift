@@ -44,5 +44,31 @@ enum ForkRecorderTests {
                "the app exports in mono by default")
         suite.expect(Defaults.registeredDefaults[DefaultsKey.forkRecorderShowsClicks] as? Bool == false,
                "the app leaves the click rings off by default")
+
+        saveFolder(suite, defaults: defaults)
+    }
+
+    /// Where saved recordings go: their own folder, else the captures' one.
+    private static func saveFolder(_ suite: TestSuite, defaults: UserDefaults) {
+        suite.expect(ForkRecorderOptions.saveFolder(recorder: "", screenshot: "~/Downloads") == "~/Downloads",
+               "with no folder of their own, recordings go where the captures go")
+        suite.expect(ForkRecorderOptions.saveFolder(recorder: "/Volumes/Films", screenshot: "~/Downloads")
+            == "/Volumes/Films",
+               "a folder chosen for the recordings themselves wins")
+        suite.expect(ForkRecorderOptions.saveFolder(recorder: "", screenshot: "").isEmpty,
+               "neither set: empty, so upstream's Desktop still applies")
+
+        defaults.removeObject(forKey: DefaultsKey.recorderSaveFolder)
+        defaults.removeObject(forKey: DefaultsKey.screenshotSaveFolder)
+        suite.expect(ForkRecorderOptions.saveFolder(in: defaults).isEmpty,
+               "no preference at all: upstream's default folder")
+        defaults.set("~/Downloads", forKey: DefaultsKey.screenshotSaveFolder)
+        suite.expect(ForkRecorderOptions.saveFolder(in: defaults) == "~/Downloads",
+               "the captures' folder, read from the preferences, takes the recordings too")
+        suite.expect(ForkRecorderOptions.saveFolder(recorder: "", in: defaults) == "~/Downloads",
+               "and so it does for a recorder folder handed over empty")
+        defaults.set("~/Movies", forKey: DefaultsKey.recorderSaveFolder)
+        suite.expect(ForkRecorderOptions.saveFolder(in: defaults) == "~/Movies",
+               "the recordings' own folder, read from the preferences, wins")
     }
 }

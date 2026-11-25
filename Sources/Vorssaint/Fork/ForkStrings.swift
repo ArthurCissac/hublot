@@ -129,6 +129,8 @@ struct ForkStrings {
     let settingsFolder: String
     let settingsChoose: String
     let settingsFolderCaption: String
+    /// Under the folder row, when the recordings were given a folder of their own elsewhere.
+    let settingsRecordingFolderOwn: (_ folder: String) -> String
     let settingsInPicture: String
     let settingsPointer: String
     let windowStyleLabel: String
@@ -285,9 +287,12 @@ struct ForkStrings {
         settingsAreaCaption: "Drag for an area, click for a whole window. Escape cancels.",
         settingsAfterCapture: "After a capture",
         settingsDefaultActionCaption: { "What \($0) does by itself with every capture, before the preview even shows." },
-        settingsFolder: "Save folder",
+        settingsFolder: "Captures and recordings folder",
         settingsChoose: "Choose…",
-        settingsFolderCaption: "Where saved captures go, including the ones a full stack of previews lets go.",
+        settingsFolderCaption: "Where saved captures and recordings go, including the captures a full stack of "
+            + "previews lets go.",
+        settingsRecordingFolderOwn: { "Recordings currently go to “\($0)”, chosen for them alone. "
+            + "Choosing a folder here brings them back with the captures." },
         settingsInPicture: "In the picture",
         settingsPointer: "Include the mouse pointer",
         windowStyleLabel: "Window capture",
@@ -437,10 +442,12 @@ struct ForkStrings {
         settingsAreaCaption: "Glisser pour une zone, cliquer pour une fenêtre entière. Échap annule.",
         settingsAfterCapture: "Après la capture",
         settingsDefaultActionCaption: { "Ce que \($0) fait de lui-même à chaque capture, avant même l’aperçu." },
-        settingsFolder: "Dossier d’enregistrement",
+        settingsFolder: "Dossier des captures et vidéos",
         settingsChoose: "Choisir…",
-        settingsFolderCaption: "Là où vont les captures enregistrées, y compris celles qu’une pile d’aperçus "
-            + "pleine laisse partir.",
+        settingsFolderCaption: "Là où vont les captures et les vidéos enregistrées, y compris les captures "
+            + "qu’une pile d’aperçus pleine laisse partir.",
+        settingsRecordingFolderOwn: { "Les vidéos vont pour l’instant dans « \($0) », choisi pour elles seules. "
+            + "Choisir un dossier ici les ramène avec les captures." },
         settingsInPicture: "Dans l’image",
         settingsPointer: "Inclure le pointeur de la souris",
         windowStyleLabel: "Capture d’une fenêtre",

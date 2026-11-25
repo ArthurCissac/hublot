@@ -26,7 +26,7 @@ enum ForkCaptureMenuTests {
                "screenshots alone bring the area, the full screen, the window and the timer")
         suite.expect(!Layout.Mode.scrolling.needsArea && !Layout.Mode.scrolling.isSetting
             && Layout.Mode.scrolling.tool == .scrolling,
-               "the scrolling item has no bar of its own: it starts a selection, whatever is framed")
+               "the scrolling item has no bar of its own: it runs on the area framed, or starts a selection")
         suite.expect(Layout.modes(available: [.color]).isEmpty,
                "the color picker is not a kind of capture: it adds no mode")
         suite.expect(Layout.recordingModes

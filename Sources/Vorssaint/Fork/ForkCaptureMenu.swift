@@ -11,10 +11,10 @@ import SwiftUI
 /// it to be adjusted first. An area drawn otherwise stays on screen, framed,
 /// with the bar under it, and the bar's buttons decide what is done with it
 /// (a picture, a scrolling capture, its text, a recording) or change a
-/// setting first. A scrolling capture starts as soon as its area is drawn, its
-/// window clicked, or Return takes the whole display; a recording opens a short
-/// bar of its own, with its options and a start button, and films an area, a
-/// window or the whole display.
+/// setting first. A scrolling capture starts at once on the area framed; with
+/// none, as soon as its area is drawn, its window clicked, or Return takes the
+/// whole display. A recording opens a short bar of its own, with its options
+/// and a start button, and films an area, a window or the whole display.
 ///
 /// The selection is upstream's own surface, run here in its "where" mode, and
 /// each action hands the area to the entry point upstream's tools already
@@ -231,8 +231,9 @@ final class ForkCaptureMenu: ObservableObject {
             run(.area, on: region)
             return
         }
-        // A scrolling capture runs on what was picked: the area drawn, the
-        // window clicked, or the whole display, which Return gives.
+        // A scrolling capture picked with nothing framed runs on what was then
+        // picked: the area drawn, the window clicked, or the whole display,
+        // which Return gives.
         if armed == .scrolling {
             armed = nil
             remember(region)
@@ -350,11 +351,15 @@ final class ForkCaptureMenu: ObservableObject {
             beginSelection()
             moveBar(to: ForkCaptureMenuLayout.barFrame(modes: model.modes, in: screenFrame))
         case .scrolling:
-            // No bar of its own and nothing kept from before, not even a framed
-            // area: a selection at once, and the capture starts on what it gives.
-            dropArea()
-            arm(mode)
-            moveBar(to: ForkCaptureMenuLayout.barFrame(modes: model.modes, in: screenFrame))
+            // No bar of its own. The area framed is kept, moved or resized as it
+            // stands, and the capture starts on it at once. With none framed, a
+            // selection, and the capture starts on what it gives.
+            if let area {
+                run(.scrolling, on: area)
+            } else {
+                arm(mode)
+                moveBar(to: ForkCaptureMenuLayout.barFrame(modes: model.modes, in: screenFrame))
+            }
         case .recording:
             // Its bar comes first, with what is filmed, the options and the
             // start button; what is filmed decides what has to be drawn.

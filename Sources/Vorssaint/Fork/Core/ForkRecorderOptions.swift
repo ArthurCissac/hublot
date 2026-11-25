@@ -44,4 +44,23 @@ enum ForkRecorderOptions {
     static func showsClicks(in defaults: UserDefaults = .standard) -> Bool {
         defaults.object(forKey: DefaultsKey.forkRecorderShowsClicks) as? Bool ?? true
     }
+
+    /// The folder saved recordings go to, as stored: the recorder's own when
+    /// one was chosen (upstream's settings, the editor's Folder button),
+    /// otherwise the captures' folder, so videos land with the pictures. Empty
+    /// when neither is set: upstream's default, the Desktop, then applies.
+    static func saveFolder(recorder: String, screenshot: String) -> String {
+        recorder.isEmpty ? screenshot : recorder
+    }
+
+    /// The same, the captures' folder read from the preferences.
+    static func saveFolder(recorder: String, in defaults: UserDefaults = .standard) -> String {
+        saveFolder(recorder: recorder,
+                   screenshot: defaults.string(forKey: DefaultsKey.screenshotSaveFolder) ?? "")
+    }
+
+    /// The same, both folders read from the preferences.
+    static func saveFolder(in defaults: UserDefaults = .standard) -> String {
+        saveFolder(recorder: defaults.string(forKey: DefaultsKey.recorderSaveFolder) ?? "", in: defaults)
+    }
 }
