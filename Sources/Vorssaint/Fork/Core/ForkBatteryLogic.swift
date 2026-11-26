@@ -3,55 +3,28 @@
 
 import Foundation
 
-/// Lot 8, the battery as Juicy did it: alerts at several levels with a
-/// coloured halo and a sound, a sound when the charger comes and goes, and a
-/// device's battery pinned in the menu bar. Pure: readings come in, what to
-/// show and play goes out. The sounds are made here, note by note, not taken
-/// from anywhere.
+/// Lot 8, the battery as Juicy does it: the Mac's readings, the charger
+/// coming and going, the pinned device, and Hublot's own sounds. The alerts
+/// themselves are rules, in `ForkBatteryAlertRules`. Pure: readings come in,
+/// what to show and play goes out. The sounds are made here, note by note,
+/// not taken from anywhere.
 enum ForkBatteryLogic {
-    enum AlertColor: Equatable {
-        case orange, yellow, red, green
-    }
-
-    struct Alert: Equatable {
-        enum Kind: Equatable { case low, charged }
-        let kind: Kind
-        let percent: Int
-        let color: AlertColor
-        let halo: Bool
-        let sound: Sound
-    }
-
-    /// The alerts, as set in Juicy (docs/reference/juicy.md): three low
-    /// levels with a halo, and the charge reaching 80 % without one.
-    static let alerts: [Alert] = [
-        Alert(kind: .low, percent: 20, color: .orange, halo: true, sound: .low),
-        Alert(kind: .low, percent: 15, color: .yellow, halo: true, sound: .low),
-        Alert(kind: .low, percent: 5, color: .red, halo: true, sound: .critical),
-        Alert(kind: .charged, percent: 80, color: .green, halo: false, sound: .charged),
-    ]
-
     /// The Mac's battery, as read.
     struct Reading: Equatable {
         let percent: Int
         let onPower: Bool
-    }
+        /// Filling now. On power is not enough: a weak charger, or a charge
+        /// paused at a limit, leaves it on power without charging.
+        let charging: Bool
 
-    /// The alert a change of reading crosses: on battery, the lowest level
-    /// just gone under; on power, 80 % just reached. Nothing at the first
-    /// reading, nor while the level stays on one side.
-    static func alert(from previous: Reading?, to current: Reading) -> Alert? {
-        guard let previous else { return nil }
-        if current.onPower {
-            return alerts.first { $0.kind == .charged && previous.percent < $0.percent && current.percent >= $0.percent }
+        init(percent: Int, onPower: Bool, charging: Bool? = nil) {
+            self.percent = percent
+            self.onPower = onPower
+            self.charging = charging ?? onPower
         }
-        // Falling past several levels at once (after sleep, say) shows the lowest.
-        return alerts
-            .filter { $0.kind == .low && previous.percent > $0.percent && current.percent <= $0.percent }
-            .min { $0.percent < $1.percent }
     }
 
-    enum PowerChange: Equatable { case plugged, unplugged }
+    enum PowerChange: Equatable, CaseIterable { case plugged, unplugged }
 
     static func powerChange(from previous: Reading?, to current: Reading) -> PowerChange? {
         guard let previous, previous.onPower != current.onPower else { return nil }
@@ -60,29 +33,80 @@ enum ForkBatteryLogic {
 
     // MARK: - Pinned device
 
+    /// What the menu bar shows for a pinned device that is not around.
+    static let awayValue = "—"
+
     /// The pinned device's battery for the menu bar, in place of the lowest
-    /// one: found by its identifier, or by its name; nil when none is pinned
-    /// or it is not around.
+    /// one: found by its identifier, or by its name; nil when none is pinned.
+    /// Out of range, or with Bluetooth off, it keeps its place with a dash
+    /// instead of the level, so the menu bar does not jump to another device.
     static func pinnedMetric(devices: [PeripheralBatteryDevice], pinned: String) -> (label: String, value: String)? {
-        guard !pinned.isEmpty,
-              let device = devices.first(where: { $0.id == pinned }) ?? devices.first(where: { $0.name == pinned })
-        else { return nil }
+        guard !pinned.isEmpty else { return nil }
+        guard let device = devices.first(where: { $0.id == pinned }) ?? devices.first(where: { $0.name == pinned }) else {
+            return (label(name: pinned, kind: .device), awayValue)
+        }
         return (label(for: device), "\(device.percent)%")
     }
 
     /// A short label: the kind of Apple device when its name tells it.
     static func label(for device: PeripheralBatteryDevice) -> String {
-        let name = device.name.lowercased()
+        label(name: device.name, kind: device.kind)
+    }
+
+    static func label(name: String, kind: PeripheralBatteryKind) -> String {
+        let name = name.lowercased()
         if name.contains("ipad") { return "IPD" }
         if name.contains("iphone") { return "IPH" }
         if name.contains("watch") { return "WCH" }
-        return device.kind.menuLabel
+        return kind.menuLabel
+    }
+
+    /// How often the batteries of connected devices are read over Bluetooth:
+    /// upstream's five minutes, two while a device is pinned so the menu bar
+    /// keeps up with an iPhone or an iPad. Each read is a connection of about
+    /// a second per device.
+    static func bluetoothRefreshInterval(pinned: String) -> TimeInterval {
+        pinned.isEmpty ? 300 : 120
+    }
+
+    static var bluetoothRefreshInterval: TimeInterval {
+        bluetoothRefreshInterval(pinned: UserDefaults.standard.string(forKey: DefaultsKey.forkPinnedBatteryDevice) ?? "")
+    }
+
+    // MARK: - Bluetooth access
+
+    /// Whether macOS lets the app use Bluetooth, as `CBManager.authorization` says.
+    enum BluetoothAccess: Equatable { case notAsked, refused, allowed }
+
+    /// The Bluetooth radio, as a central manager sees it once allowed.
+    enum BluetoothRadio: Equatable { case on, off, unknown }
+
+    /// What the settings say about reading an iPhone or an iPad.
+    enum BluetoothStatus: Equatable {
+        /// macOS has not asked yet: a button asks.
+        case askNeeded
+        /// Refused in System Settings: a button opens them.
+        case refused
+        /// Allowed, but Bluetooth is off.
+        case off
+        /// Allowed and on, or not known yet: nothing to say.
+        case ready
+    }
+
+    static func bluetoothStatus(access: BluetoothAccess, radio: BluetoothRadio) -> BluetoothStatus {
+        switch access {
+        case .notAsked: return .askNeeded
+        case .refused: return .refused
+        case .allowed: return radio == .off ? .off : .ready
+        }
     }
 
     // MARK: - Sounds
 
-    enum Sound: Equatable {
-        case low, critical, charged, plugged, unplugged
+    /// Hublot's own sounds, composed here. The first five are the defaults of
+    /// the alerts and the charger; all of them can be chosen for any moment.
+    enum Sound: String, Equatable, Hashable, CaseIterable {
+        case low, critical, charged, plugged, unplugged, chime, ping
     }
 
     struct Tone: Equatable {
@@ -101,6 +125,10 @@ enum ForkBatteryLogic {
             return [Tone(frequency: 880, duration: 0.12), Tone(frequency: 659, duration: 0.12), Tone(frequency: 523, duration: 0.22)]
         case .charged:
             return [Tone(frequency: 523, duration: 0.1), Tone(frequency: 659, duration: 0.1), Tone(frequency: 784, duration: 0.18)]
+        case .chime:
+            return [Tone(frequency: 1319, duration: 0.09), Tone(frequency: 988, duration: 0.09), Tone(frequency: 1319, duration: 0.2)]
+        case .ping:
+            return [Tone(frequency: 1760, duration: 0.16)]
         }
     }
 

@@ -108,11 +108,14 @@ struct ForkQuickActionsGrid<List: View>: View {
 enum ForkMenuTile: Hashable {
     case fork(ForkQuickActionLogic.Action)
     case panel(QuickToggleAction)
+    /// A Home Assistant favourite (ForkHome), by entity id.
+    case home(String)
 
     var key: String {
         switch self {
         case .fork(let action): return ForkTileLayoutLogic.forkKey(action.rawValue)
         case .panel(let item): return ForkTileLayoutLogic.panelKey(item.rawValue)
+        case .home(let id): return ForkTileLayoutLogic.homeKey(id)
         }
     }
 
@@ -123,6 +126,9 @@ enum ForkMenuTile: Hashable {
         } else if key.hasPrefix(ForkTileLayoutLogic.panelKey("")),
                   let item = QuickToggleAction(rawValue: String(key.dropFirst(ForkTileLayoutLogic.panelKey("").count))) {
             self = .panel(item)
+        } else if key.hasPrefix(ForkTileLayoutLogic.homeKey("")),
+                  ForkHomeLogic.isEntityID(String(key.dropFirst(ForkTileLayoutLogic.homeKey("").count))) {
+            self = .home(String(key.dropFirst(ForkTileLayoutLogic.homeKey("").count)))
         } else {
             return nil
         }
@@ -146,6 +152,9 @@ struct ForkQuickActionTiles: View {
     @AppStorage(DefaultsKey.panelToggleOrder) private var orderRaw = ""
     @AppStorage(DefaultsKey.forkQuickActionsHidden) private var forkHiddenRaw = ""
     @AppStorage(DefaultsKey.forkTileOrder) private var tileOrderRaw = ""
+    @AppStorage(DefaultsKey.forkHomeFavorites) private var homeFavoritesRaw = ""
+    @AppStorage(DefaultsKey.forkHomeMenuTiles) private var homeTilesRaw = ""
+    @AppStorage(DefaultsKey.forkHomeEnabled) private var homeEnabled = false
     /// Upstream's switches are not watched one by one: a change here redraws.
     @State private var revision = 0
     @State private var dragging: ForkMenuTile?
@@ -153,7 +162,7 @@ struct ForkQuickActionTiles: View {
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 8), count: 3)
 
     var body: some View {
-        let _ = (forkHiddenRaw, orderRaw, tileOrderRaw, revision)
+        let _ = (forkHiddenRaw, orderRaw, tileOrderRaw, revision, homeFavoritesRaw, homeTilesRaw, homeEnabled)
         let parts = arrangement
         Group {
             if editing {
@@ -181,6 +190,7 @@ struct ForkQuickActionTiles: View {
     private var known: [ForkMenuTile] {
         ForkQuickActionLogic.Action.allCases.map(ForkMenuTile.fork)
             + PanelLayout.itemOrder(QuickToggleAction.self, key: DefaultsKey.panelToggleOrder).map(ForkMenuTile.panel)
+            + ForkHome.shared.favoriteIDs.map(ForkMenuTile.home)
     }
 
     /// The whole order, tiles whose tool is off included, so they keep their place.
@@ -200,6 +210,7 @@ struct ForkQuickActionTiles: View {
     private func isAvailable(_ tile: ForkMenuTile) -> Bool {
         switch tile {
         case .fork(let action): return ForkQuickActions.isAvailable(action)
+        case .home(let id): return homeEnabled && ForkHome.shared.isFavorite(id)
         case .panel(let item):
             return item.feature.isAvailable && (item != .keyboardLight || brightness.keyboardLightEnabled != nil)
         }
@@ -208,6 +219,7 @@ struct ForkQuickActionTiles: View {
     private func isHidden(_ tile: ForkMenuTile, forkHidden: Set<ForkQuickActionLogic.Action>) -> Bool {
         switch tile {
         case .fork(let action): return forkHidden.contains(action)
+        case .home(let id): return !ForkHome.shared.isMenuTile(id)
         case .panel(let item): return !UserDefaults.standard.bool(forKey: Self.visibilityKey(item))
         }
     }
@@ -215,6 +227,7 @@ struct ForkQuickActionTiles: View {
     private func setHidden(_ tile: ForkMenuTile, _ hide: Bool) {
         switch tile {
         case .fork(let action): ForkQuickActions.setHidden(action, hide)
+        case .home(let id): if hide == ForkHome.shared.isMenuTile(id) { ForkHome.shared.toggleMenuTile(id) }
         case .panel(let item): UserDefaults.standard.set(!hide, forKey: Self.visibilityKey(item))
         }
         revision += 1
@@ -318,6 +331,7 @@ struct ForkQuickActionTiles: View {
     private func title(of tile: ForkMenuTile) -> String {
         switch tile {
         case .fork(let action): return ForkQuickActionStrings.current.title(action)
+        case .home(let id): return ForkHomeMenuTile.title(id)
         case .panel(let item): return panelTitle(item)
         }
     }
@@ -326,6 +340,7 @@ struct ForkQuickActionTiles: View {
     private func tile(_ tile: ForkMenuTile) -> some View {
         switch tile {
         case .fork(let action): ForkQuickActionTile(action: action)
+        case .home(let id): ForkHomeMenuTile(id: id)
         case .panel(let item): panelTile(item)
         }
     }

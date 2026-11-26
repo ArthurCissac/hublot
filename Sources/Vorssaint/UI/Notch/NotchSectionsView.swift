@@ -12,6 +12,7 @@ import SwiftUI
 struct NotchSectionsView: View {
     @ObservedObject var service: NotchService
     @ObservedObject private var l10n = L10n.shared
+    @ObservedObject private var forkEditing = ForkAgentEditing.shared  // Fork: Explorer's pages, shown or hidden
     @Environment(\.colorSchemeContrast) private var contrast
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     private var text: NotchStrings { FeatureStrings.notch(l10n.language) }
@@ -20,7 +21,9 @@ struct NotchSectionsView: View {
 
     var body: some View {
         Group {
-            if sections.isEmpty {
+            if forkEditing.explorer {  // Fork
+                ForkExplorerPicker(modules: service.modules)
+            } else if sections.isEmpty {
                 NotchEmptyView(symbol: "magnifyingglass", message: FeatureStrings.clipboard(l10n.language).noResults)
             } else {
                 gallery
@@ -71,6 +74,7 @@ struct NotchSectionsView: View {
                 .frame(width: NotchLayout.sectionIndicatorWidth, alignment: .trailing)
         }
         .accessibilityHint(text.sectionKeyboardHint)
+        .overlay(alignment: .bottomTrailing) { ForkExplorerEditButton() }  // Fork
     }
 
     /// One dot per resting position, the current one lit. Clicking a dot

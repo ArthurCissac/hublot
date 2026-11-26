@@ -181,6 +181,9 @@ struct NotchPagePreview: View {
         case .ambient: ForkAmbientIslandPage(size: size)  // Fork
         case .tasks: ForkTodoistIslandPage(size: size)  // Fork
         case .weather: ForkWeatherIslandPage(size: size)  // Fork
+        case .translate: ForkTranslateIslandPage(size: size)  // Fork
+        case .home: ForkHomeIslandPage(size: size)  // Fork
+        case .printer: ForkBambuIslandPage(size: size)  // Fork
         }
     }
 
@@ -412,6 +415,9 @@ extension NotchModule {
         case .ambient: return .indigo  // Fork
         case .tasks: return .red  // Fork
         case .weather: return .cyan  // Fork
+        case .translate: return .blue  // Fork
+        case .home: return .teal  // Fork
+        case .printer: return .green  // Fork
         }
     }
 

@@ -38,6 +38,9 @@ enum ForkQuickActions {
         case .smartScan: return defaults.bool(forKey: DefaultsKey.forkCleanerTools)
         case .recordScreen: return AppFeature.screenRecorder.isAvailable
         case .weather: return defaults.bool(forKey: DefaultsKey.forkWeatherEnabled)
+        case .translate: return ForkTranslateLogic.pageAvailable(in: defaults)
+        case .home: return ForkHomeLogic.pageAvailable(in: defaults)
+        case .printer: return ForkBambuLogic.pageAvailable(in: defaults)
         }
     }
 
@@ -79,6 +82,9 @@ enum ForkQuickActions {
         // Starting closes the menu first, so the selection sees the screen; a second press stops.
         case .recordScreen: closingPanel { ScreenRecorderService.shared.toggle() }
         case .weather: closingPanel { NotchService.shared.open(.weather) }
+        case .translate: closingPanel { ForkTranslate.shared.translateSelection() }
+        case .home: closingPanel { NotchService.shared.open(.home) }
+        case .printer: closingPanel { NotchService.shared.open(.printer) }
         }
     }
 }
@@ -286,6 +292,9 @@ struct ForkQuickActionTile: View {
         case .smartScan: return "wand.and.stars"
         case .recordScreen: return "record.circle"
         case .weather: return ForkWeatherLogic.pageSymbol
+        case .translate: return ForkTranslateLogic.pageSymbol
+        case .home: return ForkHomeLogic.pageSymbol
+        case .printer: return ForkBambuLogic.pageSymbol
         }
     }
 }

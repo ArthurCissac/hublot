@@ -23,8 +23,13 @@ enum ForkSwishDockApps {
     private static var orientationReadAt: TimeInterval = -.infinity
 
     /// Whether a point (window-list coordinates, top-left origin) lies along
-    /// the Dock's edge of the display under it. Arithmetic only.
-    static func isNearDock(_ point: CGPoint) -> Bool {
+    /// the Dock's edge of the display under it, with the Dock on screen there:
+    /// a hidden Dock leaves the bottom of the windows to them. `windows` is
+    /// the on-screen window list already read for this gesture.
+    static func isNearDock(_ point: CGPoint, windows: [[String: Any]]) -> Bool {
+        guard let dock = NSRunningApplication.runningApplications(withBundleIdentifier: "com.apple.dock").first,
+              ForkSwishDock.isShowing(at: point, in: windows, dockPID: dock.processIdentifier)
+        else { return false }
         let primaryHeight = NSScreen.screens.first?.frame.height ?? 0
         let appKitPoint = CGPoint(x: point.x, y: primaryHeight - point.y)
         let orientation = self.orientation
@@ -50,6 +55,16 @@ enum ForkSwishDockApps {
             element = parent
         }
         return nil
+    }
+
+    /// What the app behind the icon at the point has, or nil when no running
+    /// app's icon is there.
+    static func state(at point: CGPoint) -> ForkSwishDock.AppState? {
+        guard let app = application(at: point) else { return nil }
+        let all = windows(of: app)
+        let minimized = all.filter(isMinimized).count
+        return ForkSwishDock.AppState(open: all.count - minimized, minimized: minimized,
+                                      onScreen: onScreenWindowIDs(of: app.processIdentifier).count, active: app.isActive)
     }
 
     static func perform(_ gesture: ForkSwishDock.Gesture, on app: NSRunningApplication) {

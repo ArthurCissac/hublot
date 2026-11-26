@@ -640,6 +640,7 @@ final class AgentUsageService: ObservableObject {
         if let claudePlan { plans[.claude] = claudePlan }
         if let codex = AgentPlans.codex(planType: store.codexPlan) { plans[.codex] = codex }
         let next = store.snapshot(plans: plans, providers: enabled, now: Date())
+        ForkClaudeSessionsLogic.takeRecords(store.records, next.now)  // Fork: time per project
         published = next
         checkBudget(next)
         let checked = enabled.contains(.claude) ? claudeAppSamples.last(where: {

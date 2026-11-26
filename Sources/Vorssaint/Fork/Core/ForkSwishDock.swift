@@ -27,6 +27,26 @@ enum ForkSwishDock {
         }
     }
 
+    /// The window level macOS gives the Dock, `CGWindowLevelForKey(.dockWindow)`.
+    static let windowLayer = 20
+
+    /// Whether the Dock is on screen where the point is (window-list
+    /// coordinates, top-left origin). `windows` is the list of on-screen
+    /// windows: it holds a window of the Dock's process at the Dock's level
+    /// only while the Dock shows. A Dock that hides itself has none while
+    /// hidden, so the bottom of the windows over it stays theirs.
+    static func isShowing(at point: CGPoint, in windows: [[String: Any]], dockPID: Int32) -> Bool {
+        windows.contains { window in
+            guard (window[kCGWindowOwnerPID as String] as? NSNumber)?.int32Value == dockPID,
+                  (window[kCGWindowLayer as String] as? NSNumber)?.intValue == windowLayer,
+                  let bounds = window[kCGWindowBounds as String],
+                  CFGetTypeID(bounds as CFTypeRef) == CFDictionaryGetTypeID(),
+                  let frame = CGRect(dictionaryRepresentation: bounds as! CFDictionary)
+            else { return false }
+            return point.x >= frame.minX && point.x <= frame.maxX && point.y >= frame.minY && point.y <= frame.maxY
+        }
+    }
+
     enum Gesture: Equatable {
         /// Bring the app's next window forward, or its last one.
         case cycle(forward: Bool)
@@ -63,5 +83,29 @@ enum ForkSwishDock {
     static func cycleTarget(_ windows: [UInt32], forward: Bool) -> UInt32? {
         guard windows.count >= 2 else { return nil }
         return forward ? windows[1] : windows.last
+    }
+
+    /// What the app behind an icon has: enough to tell whether a gesture
+    /// would do anything, so that only one that will is shown.
+    struct AppState: Equatable {
+        /// Its standard windows not minimized, and minimized.
+        var open = 0
+        var minimized = 0
+        /// Its ordinary windows on screen, and whether it is the active app.
+        var onScreen = 0
+        var active = false
+    }
+
+    /// Whether a gesture does something to that app, as `perform` would do
+    /// it: going through windows needs a window to bring forward (two when
+    /// the app is already in front), minimizing an open window, bringing back
+    /// a minimized one.
+    static func acts(_ gesture: Gesture, on app: AppState) -> Bool {
+        switch gesture {
+        case .quit: return true
+        case .minimize: return app.open > 0
+        case .unminimize: return app.minimized > 0
+        case .cycle: return app.onScreen >= (app.active ? 2 : 1)
+        }
     }
 }

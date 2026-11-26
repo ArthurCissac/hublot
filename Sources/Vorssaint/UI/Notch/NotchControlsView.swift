@@ -114,6 +114,9 @@ struct NotchControlsView: View {
         case .calendar: NotchCalendarTile(service: service)
         case .ambient: ForkAmbientIslandTile(service: service)  // Fork
         case .tasks: ForkTodoistIslandTile(service: service)  // Fork
+        case .translate: ForkTranslateIslandTile(service: service)  // Fork
+        case .home: ForkHomeIslandTile(service: service)  // Fork
+        case .printer: ForkBambuIslandTile(service: service)  // Fork
         case .volume, .brightness, .keyboardLight, .music: EmptyView()
         }
     }
@@ -139,6 +142,9 @@ extension NotchControlItem {
         case .calendar: return NotchModule.calendar.title(l10n.language)
         case .ambient: return ForkAmbientStrings.current.title  // Fork
         case .tasks: return ForkTodoistStrings.current.title  // Fork
+        case .translate: return ForkTranslateStrings.current.translate  // Fork
+        case .home: return ForkHomeStrings.current.title  // Fork
+        case .printer: return ForkBambuStrings.current.title  // Fork
         }
     }
 }

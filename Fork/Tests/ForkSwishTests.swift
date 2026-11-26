@@ -120,6 +120,32 @@ enum ForkSwishTests {
             && ForkSwishDock.cycleTarget([10, 11, 12], forward: false) == 12
             && ForkSwishDock.cycleTarget([10], forward: true) == nil,
                "going through windows brings the next one forward, or the backmost going back")
+        typealias App = ForkSwishDock.AppState
+        let lone = App(open: 1, minimized: 0, onScreen: 1, active: true)
+        suite.expect(!ForkSwishDock.acts(.cycle(forward: true), on: lone)
+            && ForkSwishDock.acts(.cycle(forward: false), on: App(open: 1, minimized: 0, onScreen: 1, active: false))
+            && ForkSwishDock.acts(.cycle(forward: true), on: App(open: 2, minimized: 0, onScreen: 2, active: true))
+            && !ForkSwishDock.acts(.cycle(forward: true), on: App(open: 0, minimized: 2, onScreen: 0, active: false)),
+               "going through windows shows only when a window would come forward: two for the app in front, one otherwise")
+        suite.expect(ForkSwishDock.acts(.minimize(all: false), on: lone) && !ForkSwishDock.acts(.unminimize(all: false), on: lone)
+            && ForkSwishDock.acts(.unminimize(all: true), on: App(open: 0, minimized: 1, onScreen: 0, active: false))
+            && !ForkSwishDock.acts(.minimize(all: true), on: App())
+            && ForkSwishDock.acts(.quit, on: App()),
+               "minimizing needs an open window, bringing back a minimized one; quitting always acts")
+        func window(pid: Int32, layer: Int, _ frame: CGRect) -> [String: Any] {
+            [kCGWindowOwnerPID as String: NSNumber(value: pid), kCGWindowLayer as String: NSNumber(value: layer),
+             kCGWindowBounds as String: frame.dictionaryRepresentation]
+        }
+        let display = CGRect(x: 0, y: 0, width: 1512, height: 982)
+        let bottom = CGPoint(x: 700, y: 870)
+        let app = window(pid: 500, layer: 0, CGRect(x: 0, y: 33, width: 1512, height: 949))
+        suite.expect(ForkSwishDock.isShowing(at: bottom, in: [app, window(pid: 90, layer: 20, display)], dockPID: 90)
+            && !ForkSwishDock.isShowing(at: bottom, in: [app], dockPID: 90),
+               "the Dock counts only while one of its windows is on screen: hidden, the bottom of a window is the window's")
+        suite.expect(!ForkSwishDock.isShowing(at: bottom, in: [window(pid: 90, layer: 0, display)], dockPID: 90)
+            && !ForkSwishDock.isShowing(at: bottom, in: [window(pid: 7, layer: 20, display)], dockPID: 90)
+            && !ForkSwishDock.isShowing(at: CGPoint(x: 2000, y: 870), in: [window(pid: 90, layer: 20, display)], dockPID: 90),
+               "another level, another app's window or another display does not make the Dock show there")
     }
 
     private static func modifiers(_ suite: TestSuite) {

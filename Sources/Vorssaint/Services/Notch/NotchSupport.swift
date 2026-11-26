@@ -9,6 +9,9 @@ import CoreGraphics
 enum NotchModule: String, CaseIterable, Identifiable {
     case controls, mixer, music, clipboard, captures, files, system, tools, calendar, notifications, timer, camera, downloads, scratchpad, agents, watch
     case ambient, tasks, weather  // Fork: background sound's, Todoist's and Weather pages
+    case translate  // Fork: the Translation page (ForkTranslate)
+    case home  // Fork: the Home page (ForkHome)
+    case printer  // Fork: the Printer page (ForkBambu)
     var id: String { rawValue }
 
     var symbol: String {
@@ -35,6 +38,9 @@ enum NotchModule: String, CaseIterable, Identifiable {
         case .ambient: return ForkAmbientLogic.pageSymbol  // Fork
         case .tasks: return ForkTodoistLogic.pageSymbol  // Fork
         case .weather: return ForkWeatherLogic.pageSymbol  // Fork
+        case .translate: return ForkTranslateLogic.pageSymbol  // Fork: the Translation page
+        case .home: return ForkHomeLogic.pageSymbol  // Fork: the Home page
+        case .printer: return ForkBambuLogic.pageSymbol  // Fork: the Printer page
         }
     }
 
@@ -60,6 +66,9 @@ enum NotchModule: String, CaseIterable, Identifiable {
         case .ambient: return "u"  // Fork: background sound's page
         case .tasks: return "k"  // Fork: Todoist's page
         case .weather: return "e"  // Fork: the Weather page
+        case .translate: return "l"  // Fork: the Translation page
+        case .home: return "h"  // Fork: the Home page
+        case .printer: return "j"  // Fork: the Printer page
         }
     }
 
@@ -86,6 +95,9 @@ enum NotchModule: String, CaseIterable, Identifiable {
         case .ambient: return ForkAmbientLogic.pageAvailable(in: defaults)  // Fork
         case .tasks: return ForkTodoistLogic.pageAvailable(in: defaults)  // Fork
         case .weather: return ForkWeatherLogic.pageAvailable(in: defaults)  // Fork
+        case .translate: return ForkTranslateLogic.pageAvailable(in: defaults)  // Fork
+        case .home: return ForkHomeLogic.pageAvailable(in: defaults)  // Fork: the Home page
+        case .printer: return ForkBambuLogic.pageAvailable(in: defaults)  // Fork: the Printer page
         case .system:
             return [.monitorCPU, .monitorGPU, .monitorMemory, .monitorNetwork,
                     .monitorDisk, .monitorPower, .fanControl, .connectedDevices].contains { (feature: AppFeature) in
@@ -1307,6 +1319,9 @@ enum NotchControlItem: String, CaseIterable, Identifiable {
     case volume, brightness, keyboardLight, music, mixer, keepAwake, timer, calendar, microphone, screenshot, recording, speedTest, panel, commandBar, scratchpad
     case ambient  // Fork: background sound (ForkAmbientLogic)
     case tasks  // Fork: Todoist (ForkTodoistLogic)
+    case translate  // Fork: translation (ForkTranslateLogic)
+    case home  // Fork: Home Assistant (ForkHomeLogic)
+    case printer  // Fork: Bambu Lab (ForkBambuLogic)
     static let defaultHidden = "keyboardLight,microphone,screenshot,recording,speedTest,panel,commandBar,scratchpad"
     var id: String { rawValue }
 
@@ -1339,6 +1354,9 @@ enum NotchControlItem: String, CaseIterable, Identifiable {
         case .calendar: return NotchModule.calendar.symbol
         case .ambient: return ForkAmbientLogic.islandSymbol  // Fork
         case .tasks: return ForkTodoistLogic.islandSymbol  // Fork
+        case .translate: return ForkTranslateLogic.pageSymbol  // Fork: the Translate button
+        case .home: return ForkHomeLogic.pageSymbol  // Fork: the Home button
+        case .printer: return ForkBambuLogic.pageSymbol  // Fork: the Printer button
         }
     }
 
@@ -1360,6 +1378,9 @@ enum NotchControlItem: String, CaseIterable, Identifiable {
         case .calendar: return .page(.calendar, feature: .notchCalendar)
         case .ambient: return .none  // Fork
         case .tasks: return .none  // Fork: Todoist
+        case .translate: return .none  // Fork: translation
+        case .home: return .none  // Fork: Home Assistant
+        case .printer: return .none  // Fork: Bambu Lab
         }
     }
 
@@ -1382,6 +1403,9 @@ enum NotchControlItem: String, CaseIterable, Identifiable {
         case .calendar: return NotchSupport.modules(in: defaults).contains(.calendar)
         case .ambient: return ForkAmbientLogic.islandControlAvailable(in: defaults)  // Fork
         case .tasks: return ForkTodoistLogic.islandControlAvailable(in: defaults)  // Fork
+        case .translate: return ForkTranslateLogic.islandControlAvailable(in: defaults)  // Fork
+        case .home: return ForkHomeLogic.islandControlAvailable(in: defaults)  // Fork: the Home button
+        case .printer: return ForkBambuLogic.islandControlAvailable(in: defaults)  // Fork: the Printer button
         }
     }
 }
@@ -2819,10 +2843,14 @@ struct NotchGeometry: Equatable {
                 contentHeight = min(budget, NotchLayout.timer(mode: timerMode, hasSession: timerHasSession, height: budget))
             case .agents:
                 // Only the cards a person chose; a short set leaves a short island.
-                contentHeight = min(budget, agentsHeight.map { $0 > 0 ? $0 : NotchLayout.emptyHeight } ?? budget)
+                contentHeight = min(ForkAgentLayoutLogic.styleEnabled() ? max(budget, screen.height - 48 - quickAccessBottomInset - headerTopInset - headerChromeHeight) : budget, agentsHeight.map { $0 > 0 ? $0 : NotchLayout.emptyHeight } ?? budget)  // Fork: the whole page, never scrolled
             // Lists and previews fill the chosen content budget.
-            case .mixer, .calendar, .clipboard, .captures, .files, .notifications, .downloads, .camera, .scratchpad, .watch, .ambient, .tasks, .weather:  // Fork
+            case .mixer, .calendar, .clipboard, .captures, .files, .notifications, .downloads, .camera, .scratchpad, .watch, .ambient, .tasks, .weather, .translate:  // Fork
                 contentHeight = budget
+            case .home:  // Fork: every favourite shown, never scrolled
+                contentHeight = min(max(budget, screen.height - 48 - quickAccessBottomInset - headerTopInset - headerChromeHeight), ForkHomeLogic.contentHeight(contentWidth) ?? budget)
+            case .printer:  // Fork: the camera and the print, never scrolled
+                contentHeight = min(max(budget, screen.height - 48 - quickAccessBottomInset - headerTopInset - headerChromeHeight), ForkBambuLogic.contentHeight(contentWidth) ?? budget)
             }
         }
         var preferredHeight = headerTopInset + headerChromeHeight + contentHeight
@@ -2841,13 +2869,15 @@ struct NotchGeometry: Equatable {
     /// Visible rows. The gallery is a page like the app panel, so a preset
     /// shows three rows before any row has to step in; the rest step in whole.
     func sectionRows(count: Int) -> Int {
+        ForkAgentLayoutLogic.explorerRows(count: count, columns: sectionColumns, presetRows:  // Fork: every row at once
         NotchLayout.railRows(count: count,
                              perRow: sectionColumns,
                              rowHeight: NotchLayout.sectionTileHeight, spacing: NotchLayout.sectionSpacing, height: pageBudget)
+            , tileHeight: NotchLayout.sectionTileHeight, spacing: NotchLayout.sectionSpacing, room: screen.height - 48 - quickAccessBottomInset - headerTopInset - headerChromeHeight, fitsAll: ForkAgentLayoutLogic.explorerFitsAll())  // Fork
     }
 
     func sectionPickerSize(count: Int) -> CGSize {
-        let content = min(pageBudget, count == 0 ? NotchLayout.emptyHeight
+        let content = min(max(pageBudget, ForkAgentLayoutLogic.explorerFitsAll() ? NotchLayout.railHeight(rows: sectionRows(count: count), rowHeight: NotchLayout.sectionTileHeight, spacing: NotchLayout.sectionSpacing) : 0), count == 0 ? NotchLayout.emptyHeight  // Fork
             : NotchLayout.railHeight(rows: sectionRows(count: count), rowHeight: NotchLayout.sectionTileHeight, spacing: NotchLayout.sectionSpacing))
         let desiredHeight = headerTopInset + headerChromeHeight + content
         return CGSize(width: expandedWidth, height: min(desiredHeight, screen.height - 48 - quickAccessBottomInset))

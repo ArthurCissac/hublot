@@ -319,6 +319,66 @@ BUNDLE_TEXTS = {
 }
 
 
+# Keys the fork adds to the staged Info.plist, which upstream does not set:
+# the local network prompt (macOS 15 and later ask before an app reaches a
+# device at home, here Home Assistant, ForkHome) and plain http to local
+# hosts only (NSAllowsLocalNetworking: `.local` names, single labels and
+# local addresses; every other host still needs https).
+BUNDLE_ADDITIONS = {
+    "NSLocalNetworkUsageDescription": {
+        "en": "{name} connects to your Home Assistant and your 3D printer on your local network to show and "
+              "control the devices you choose.",
+        "fr": "{name} se connecte à votre Home Assistant et à votre imprimante 3D sur votre réseau local pour "
+              "afficher et piloter les appareils que vous choisissez.",
+    },
+}
+LOCAL_NETWORKING = ("\t<key>NSAppTransportSecurity</key>\n\t<dict>\n\t\t<key>NSAllowsLocalNetworking</key>\n"
+                    "\t\t<true/>\n\t</dict>\n")
+
+
+def xml_escape(value):
+    return value.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+
+def add_bundle_entries(targets, name):
+    """Adds the fork's own keys to a staged bundle. Returns how many files it changed.
+
+    Running it again on the same bundle changes nothing; a key upstream sets
+    itself stops the build, so its text is reviewed instead of overwritten.
+    """
+    changed = 0
+    for target in targets:
+        text = target.read_text(encoding="utf-8")
+        updated = text
+        if target.name == "Info.plist":
+            insert = ""
+            for key, texts in BUNDLE_ADDITIONS.items():
+                ours = xml_escape(texts["en"].format(name=name))
+                if f"<key>{key}</key>" not in updated:
+                    insert += f"\t<key>{key}</key>\n\t<string>{ours}</string>\n"
+                elif ours not in updated:
+                    fail(f"{target}: upstream now sets {key}: review BUNDLE_ADDITIONS in Fork/brand.py")
+            if "<key>NSAllowsLocalNetworking</key>" not in updated:
+                if "<key>NSAppTransportSecurity</key>" in updated:
+                    fail(f"{target}: upstream now sets NSAppTransportSecurity: merge NSAllowsLocalNetworking "
+                         "into it in Fork/brand.py")
+                insert += LOCAL_NETWORKING
+            end = updated.rfind("</dict>")
+            if end < 0:
+                fail(f"{target}: no root dictionary to add the fork's keys to")
+            updated = updated[:end] + insert + updated[end:]
+        else:
+            language = target.parent.name.removesuffix(".lproj")
+            for key, texts in BUNDLE_ADDITIONS.items():
+                if language in texts and language != "en" and f'"{key}"' not in updated:
+                    value = texts[language].format(name=name).replace("\\", "\\\\").replace('"', '\\"')
+                    updated = updated.rstrip("\n") + f'\n"{key}" = "{value}";\n'
+        if updated != text:
+            target.write_text(updated, encoding="utf-8")
+            changed += 1
+    return changed
+
+
 def set_plist_string(text, key, value):
     """Replaces the <string> that follows <key>key</key> in an XML property list.
 
@@ -386,8 +446,9 @@ def command_resources(arguments):
             target.write_text(updated, encoding="utf-8")
         renamed += counts["app-name"]
     reworded = reword_bundle_texts(targets, load_identity()["FORK_APP_NAME"])
-    print(f"  identity pass: {renamed} names renamed, {reworded} permission texts reworded "
-          f"in {len(targets)} bundle resource files")
+    added = add_bundle_entries(targets, load_identity()["FORK_APP_NAME"])
+    print(f"  identity pass: {renamed} names renamed, {reworded} permission texts reworded, "
+          f"{added} files given the fork's own keys in {len(targets)} bundle resource files")
 
 
 def command_audit(arguments):
@@ -497,7 +558,7 @@ def command_selftest(_arguments):
         if got != expected:
             print(f"  FAIL  permission text: expected {expected!r}\n        got      {got!r}")
             failures += 1
-    for key, texts in BUNDLE_TEXTS.items():
+    for key, texts in {**BUNDLE_TEXTS, **BUNDLE_ADDITIONS}.items():
         for language in ("en", "fr"):
             template = texts.get(language, "")
             # The name comes from Fork/identity.sh, never from the text itself.

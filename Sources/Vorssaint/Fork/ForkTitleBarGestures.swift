@@ -56,6 +56,14 @@ final class ForkTitleBarGestures {
     /// What the gesture under way would do now, to notice when it changes.
     private var shownGesture: Logic.Gesture?
     private var shownDockGesture: ForkSwishDock.Gesture?
+    /// What the app behind the Dock icon under the gesture has, once read
+    /// through Accessibility; nil until then, or when no app's icon is there.
+    private var dockState: ForkSwishDock.AppState?
+    /// The Dock gesture under way as last asked to show, shown again once the
+    /// app is read; nil when no Dock gesture is under way.
+    private var dockShown: (acting: ForkSwishDock.Gesture?, shown: ForkSwishDock.Gesture?, progress: Double)?
+    /// Counts gestures, so that a late answer about an earlier one is dropped.
+    private var gestureCount = 0
     private var escapeMonitor: Any?
     private var escaped = false
 
@@ -116,7 +124,7 @@ final class ForkTitleBarGestures {
         source = nil
         swipe = nil
         pinch = nil
-        ForkSwishFeedback.shared.end()
+        endDockGesture()
     }
 
     /// The holding tap is created switched off; only a gesture switches it on.
@@ -260,6 +268,7 @@ final class ForkTitleBarGestures {
             switch current.target {
             case .window(let window):
                 let gesture = role.flatMap { role in direction.flatMap { Logic.gesture(for: $0, role: role) } }
+                    .flatMap { Self.acts($0, on: window) ? $0 : nil }
                 feedback(acting: gesture, shown: gesture, progress: 1, on: window)
             case .dock:
                 let gesture = role.flatMap { role in direction.flatMap { ForkSwishDock.gesture(for: $0, role: role) } }
@@ -274,9 +283,10 @@ final class ForkTitleBarGestures {
             let direction = Logic.direction(of: current.tracker.travel, threshold: Self.threshold())
             switch current.target {
             case .window(let window):
-                finish(role.flatMap { role in direction.flatMap { Logic.gesture(for: $0, role: role) } }, on: window)
+                finish(role.flatMap { role in direction.flatMap { Logic.gesture(for: $0, role: role) } }
+                    .flatMap { Self.acts($0, on: window) ? $0 : nil }, on: window)
             case .dock(let point):
-                ForkSwishFeedback.shared.end()
+                endDockGesture()
                 if let gesture = role.flatMap({ role in direction.flatMap { ForkSwishDock.gesture(for: $0, role: role) } }) {
                     performOnDock(gesture, at: point)
                 }
@@ -286,7 +296,7 @@ final class ForkTitleBarGestures {
             swipe = nil
             _ = gestureEnded(lastMoved: Self.now)
             releaseHold()
-            if let window = current.target.window { finish(nil, on: window) } else { ForkSwishFeedback.shared.end() }
+            if let window = current.target.window { finish(nil, on: window) } else { endDockGesture() }
         case .other:
             break
         }
@@ -332,7 +342,7 @@ final class ForkTitleBarGestures {
             case .window(let window):
                 finish(Logic.gesture(forPinch: magnification), on: window)
             case .dock(let point):
-                ForkSwishFeedback.shared.end()
+                endDockGesture()
                 if let gesture = ForkSwishDock.gesture(forPinch: magnification) { performOnDock(gesture, at: point) }
             }
         case .cancelled:
@@ -340,7 +350,7 @@ final class ForkTitleBarGestures {
             pinch = nil
             _ = gestureEnded(lastMoved: Self.now)
             releaseHold()
-            if let window = current.target.window { finish(nil, on: window) } else { ForkSwishFeedback.shared.end() }
+            if let window = current.target.window { finish(nil, on: window) } else { endDockGesture() }
         case .other:
             break
         }
@@ -366,7 +376,17 @@ final class ForkTitleBarGestures {
         ForkSwishFeedback.shared.update(item: item, outline: outline)
     }
 
+    /// The Dock gesture under way would now do `acting`; the bubble shows
+    /// `shown`. Only what the app behind the icon would really undergo shows:
+    /// nothing before that app is read, nothing over a spot with no app.
     private func dockFeedback(acting: ForkSwishDock.Gesture?, shown: ForkSwishDock.Gesture?, progress: Double) {
+        dockShown = (acting, shown, progress)
+        let state = dockState
+        let possible = { (gesture: ForkSwishDock.Gesture?) -> ForkSwishDock.Gesture? in
+            guard let gesture, let state, ForkSwishDock.acts(gesture, on: state) else { return nil }
+            return gesture
+        }
+        let acting = possible(acting), shown = possible(shown)
         let defaults = UserDefaults.standard
         if acting != shownDockGesture {
             shownDockGesture = acting
@@ -374,6 +394,34 @@ final class ForkTitleBarGestures {
         }
         let item = defaults.bool(forKey: DefaultsKey.forkSwishBubble) ? shown.map { dockItem(for: $0, progress: progress) } : nil
         ForkSwishFeedback.shared.update(item: item, outline: nil)
+    }
+
+    /// Reads the app behind the Dock icon off the taps' path, then shows the
+    /// gesture under way again with what it found.
+    private func readDock(at point: CGPoint, gesture: Int) {
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            let state = ForkSwishDockApps.state(at: point)
+            DispatchQueue.main.async { [weak self] in
+                guard let self, self.gestureCount == gesture, let state else { return }
+                self.dockState = state
+                if let shown = self.dockShown { self.dockFeedback(acting: shown.acting, shown: shown.shown, progress: shown.progress) }
+            }
+        }
+    }
+
+    /// A Dock gesture is over: its bubble goes, and a late answer about its
+    /// app shows nothing.
+    private func endDockGesture() {
+        dockShown = nil
+        dockState = nil
+        ForkSwishFeedback.shared.end()
+    }
+
+    /// Whether a window gesture would do something: sending a window to
+    /// another display needs a display that way.
+    private static func acts(_ gesture: Logic.Gesture, on window: WindowServerWindowCandidate) -> Bool {
+        guard case .display(let direction) = gesture else { return true }
+        return ForkSwishWindowOps.destination(of: window.frame, toward: direction) != nil
     }
 
     private static func tapTrackpad() {
@@ -476,6 +524,10 @@ final class ForkTitleBarGestures {
         let defaults = UserDefaults.standard
         shownGesture = nil
         shownDockGesture = nil
+        gestureCount += 1
+        dockState = nil
+        dockShown = nil
+        if case .dock(let point) = target { readDock(at: point, gesture: gestureCount) }
         if let window = target.window {
             engageHold()
             if twice.begin(window: window.windowID, at: Self.now) { pendingClose?.cancel() }
@@ -508,23 +560,27 @@ final class ForkTitleBarGestures {
         let flags = Int(CGEventSource.flagsState(.combinedSessionState).rawValue)
         let superHeld = ForkSwishModifiers.role(flags: flags, in: Self.modifiers())?.superHeld ?? false
         if UserDefaults.standard.bool(forKey: DefaultsKey.forkSwishRequireSuper), !superHeld { return }
-        guard let window = window(at: pointer, anywhere: superHeld) else { return }
+        guard let window = window(in: Self.onScreenWindows(), at: pointer, anywhere: superHeld) else { return }
         perform(.layout(.center), on: window)
     }
 
     /// What a gesture starting with this event acts on: the window whose
     /// title bar is under the pointer; else an icon of the Dock, when the
-    /// pointer is along the Dock's edge; else, with the super modifier held,
-    /// the window under the pointer wherever it is. Nothing when the super
-    /// modifier is required and not held.
+    /// pointer is along the Dock's edge and the Dock shows; else, with the
+    /// super modifier held, the window under the pointer wherever it is.
+    /// Nothing when the super modifier is required and not held. One read of
+    /// the window list serves all three.
     private func startingTarget(for event: CGEvent) -> Target? {
         let superHeld = ForkSwishModifiers.role(flags: Int(event.flags.rawValue), in: Self.modifiers())?.superHeld ?? false
         let defaults = UserDefaults.standard
         if defaults.bool(forKey: DefaultsKey.forkSwishRequireSuper), !superHeld { return nil }
         let point = event.location
-        if let window = window(at: point, anywhere: false) { return .window(window) }
-        if defaults.bool(forKey: DefaultsKey.forkSwishDockGestures), ForkSwishDockApps.isNearDock(point) { return .dock(point) }
-        return superHeld ? window(at: point, anywhere: true).map(Target.window) : nil
+        let windows = Self.onScreenWindows()
+        if let window = window(in: windows, at: point, anywhere: false) { return .window(window) }
+        if defaults.bool(forKey: DefaultsKey.forkSwishDockGestures), ForkSwishDockApps.isNearDock(point, windows: windows) {
+            return .dock(point)
+        }
+        return superHeld ? window(in: windows, at: point, anywhere: true).map(Target.window) : nil
     }
 
     /// The Dock's icon is read through Accessibility, off the taps' path.
@@ -535,12 +591,15 @@ final class ForkTitleBarGestures {
         }
     }
 
+    /// The windows on screen, front to back, as the window server lists them.
+    private static func onScreenWindows() -> [[String: Any]] {
+        CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] ?? []
+    }
+
     /// The window under the point, from the window list alone, without asking
     /// any app: an app left alone by the window layout settings, or this app,
     /// gives nothing.
-    private func window(at point: CGPoint, anywhere: Bool) -> WindowServerWindowCandidate? {
-        guard let windows = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements],
-                                                       kCGNullWindowID) as? [[String: Any]] else { return nil }
+    private func window(in windows: [[String: Any]], at point: CGPoint, anywhere: Bool) -> WindowServerWindowCandidate? {
         let ignored = WindowLayoutIgnoredApps.shared.apps
         guard let candidate = WindowServerSupport.windowCandidate(
             in: windows, at: point, ownProcessID: ProcessInfo.processInfo.processIdentifier,

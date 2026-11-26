@@ -914,6 +914,9 @@ final class NotchService: ObservableObject {
         let providers = enabled.filter { usage.seen.contains($0) || ($0 == .codex && !accounts.isEmpty)
             || ($0 == .claude && claudeAccount != nil) }
         guard !providers.isEmpty else { return 0 }
+        if ForkAgentLayoutLogic.styleEnabled() {  // Fork: the Hublot style's grid
+            return ForkAgentLayoutLogic.pageHeight(NotchAgentSupport.tiles(cards: NotchAgentSupport.cards(), providers: providers, codexAccounts: accounts, claudeAccount: claudeAccount), width: width)  // Fork
+        }
         return NotchAgentSupport.contentHeight(NotchAgentSupport.rows(
             NotchAgentSupport.tiles(cards: NotchAgentSupport.cards(), providers: providers, codexAccounts: accounts,
                                     claudeAccount: claudeAccount),
@@ -1778,7 +1781,7 @@ final class NotchService: ObservableObject {
     }
 
     var filteredSections: [NotchModule] {
-        NotchSupport.filteredModules(modules, query: sectionQuery) { module in
+        NotchSupport.filteredModules(ForkAgentLayoutLogic.explorerShown(modules, hidden: ForkAgentLayoutLogic.hidden(UserDefaults.standard.string(forKey: DefaultsKey.forkExplorerHidden)), searching: !sectionQuery.isEmpty, name: \.rawValue), query: sectionQuery) { module in  // Fork
             let language = L10n.shared.language
             let music = module == .music ? FeatureStrings.notch(language).music : ""
             return [module.title(language), module.rawValue, music].joined(separator: " ")
@@ -1936,6 +1939,9 @@ final class NotchService: ObservableObject {
             case .scratchpad: openScratchpad()
             case .ambient: ForkAmbientPlayer.shared.toggle()  // Fork
             case .tasks: perform { ForkTodoistPanel.shared.show() }  // Fork
+            case .translate: ForkTranslate.shared.translateSelection()  // Fork
+            case .home: select(.home)  // Fork: the Home page
+            case .printer: select(.printer)  // Fork: the Printer page
             case .volume, .brightness, .keyboardLight: select(.controls)
             }
         }
@@ -2409,6 +2415,7 @@ final class NotchService: ObservableObject {
         }
         if ForkTodoistLogic.isReminder(symbol: selectedNotice.symbol) { open(.tasks); if expanded { dismissNotice() }; return }  // Fork
         if ForkVercelLogic.isNotice(symbol: selectedNotice.symbol) { ForkVercelLogic.openFinished(); dismissNotice(); return }  // Fork
+        if ForkClaudeSessionsLogic.isNotice(symbol: selectedNotice.symbol) { ForkClaudeSessionsLogic.goToWaiting(); dismissNotice(); return }  // Fork
         open(selectedNotice.event == .download ? .downloads : selectedNotice.event == .timer ? .timer
              : selectedNotice.event == .accessory ? .system : selectedNotice.event == .systemNotification ? .notifications
              : selectedNotice.event == .clipboard ? .clipboard : selectedNotice.event == .agents ? .agents

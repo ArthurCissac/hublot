@@ -611,6 +611,9 @@ struct NotchView: View {
             case .ambient: ForkAmbientIslandPage(size: pageSize)  // Fork
             case .tasks: ForkTodoistIslandPage(size: pageSize)  // Fork
             case .weather: ForkWeatherIslandPage(size: pageSize)  // Fork
+            case .translate: ForkTranslateIslandPage(size: pageSize)  // Fork
+            case .home: ForkHomeIslandPage(size: pageSize)  // Fork
+            case .printer: ForkBambuIslandPage(size: pageSize)  // Fork
             }
         }
     }
@@ -849,6 +852,9 @@ extension NotchModule: PanelOrderItem {
         case .ambient: return ForkAmbientLogic.title(french: language == .fr)  // Fork
         case .tasks: return ForkTodoistLogic.title(french: language == .fr)  // Fork
         case .weather: return ForkWeatherLogic.title(french: language == .fr)  // Fork
+        case .translate: return ForkTranslateLogic.title(french: language == .fr)  // Fork
+        case .home: return ForkHomeLogic.title(french: language == .fr)  // Fork
+        case .printer: return ForkBambuLogic.title(french: language == .fr)  // Fork
         }
     }
 }

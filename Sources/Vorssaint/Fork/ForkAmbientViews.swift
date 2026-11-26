@@ -757,37 +757,36 @@ struct ForkAmbientIslandPage: View {
         let text = ForkAmbientStrings.current
         let active = Logic.Sound.allCases.filter { player.mix[$0] != nil }
         let others = Logic.Sound.allCases.filter { player.mix[$0] == nil }
-        ScrollView(.vertical, showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 12) {
-                header(text)
-                presets(text)
-                if !active.isEmpty {
-                    LazyVGrid(columns: [GridItem(.flexible(), spacing: 14), GridItem(.flexible(), spacing: 14)], spacing: 8) {
-                        ForEach(active) { level($0, text) }
-                    }
+        // No scrolling at all: everything is laid out within the island.
+        VStack(alignment: .leading, spacing: 12) {
+            header(text)
+            presets(text)
+            if !active.isEmpty {
+                LazyVGrid(columns: [GridItem(.flexible(), spacing: 14), GridItem(.flexible(), spacing: 14)], spacing: 8) {
+                    ForEach(active) { level($0, text) }
                 }
-                if !others.isEmpty {
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 6) {
-                            ForEach(others) { sound in
-                                Button { player.toggleSound(sound) } label: {
-                                    Label(text.sound(sound), systemImage: sound.symbol)
-                                        .font(.system(size: 11, weight: .medium))
-                                        .foregroundStyle(.white.opacity(0.8))
-                                        .padding(.horizontal, 10)
-                                        .padding(.vertical, 6)
-                                        .background(Capsule().fill(Color.white.opacity(0.08)))
-                                }
-                                .buttonStyle(.plain)
-                            }
+            }
+            if !others.isEmpty {
+                // Every sound in sight: the chips wrap instead of scrolling sideways.
+                FlowLayoutLite(spacing: 6) {
+                    ForEach(others) { sound in
+                        Button { player.toggleSound(sound) } label: {
+                            Label(text.sound(sound), systemImage: sound.symbol)
+                                .font(.system(size: 11, weight: .medium))
+                                .foregroundStyle(.white.opacity(0.8))
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 6)
+                                .background(Capsule().fill(Color.white.opacity(0.08)))
                         }
+                        .buttonStyle(.plain)
                     }
                 }
             }
-            .padding(.horizontal, 6)
-            .padding(.vertical, 4)
         }
-        .frame(width: size.width, height: size.height)
+        .padding(.horizontal, 6)
+        .padding(.vertical, 4)
+        .frame(width: size.width, height: size.height, alignment: .top)
+        .clipped()
     }
 
     private func header(_ text: ForkAmbientStrings) -> some View {
@@ -833,21 +832,20 @@ struct ForkAmbientIslandPage: View {
         }
     }
 
+    /// Every ambience in sight: the chips wrap instead of scrolling sideways.
     private func presets(_ text: ForkAmbientStrings) -> some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 6) {
-                ForEach(Logic.Preset.allCases) { preset in
-                    let chosen = Logic.preset(for: player.mix) == preset
-                    Button { player.apply(preset) } label: {
-                        Label(text.preset(preset), systemImage: preset.symbol)
-                            .font(.system(size: 11, weight: .semibold))
-                            .foregroundStyle(chosen ? Color.white : Color.white.opacity(0.75))
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 6)
-                            .background(Capsule().fill(chosen ? glow.opacity(0.5) : Color.white.opacity(0.08)))
-                    }
-                    .buttonStyle(.plain)
+        FlowLayoutLite(spacing: 6) {
+            ForEach(Logic.Preset.allCases) { preset in
+                let chosen = Logic.preset(for: player.mix) == preset
+                Button { player.apply(preset) } label: {
+                    Label(text.preset(preset), systemImage: preset.symbol)
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(chosen ? Color.white : Color.white.opacity(0.75))
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(Capsule().fill(chosen ? glow.opacity(0.5) : Color.white.opacity(0.08)))
                 }
+                .buttonStyle(.plain)
             }
         }
     }

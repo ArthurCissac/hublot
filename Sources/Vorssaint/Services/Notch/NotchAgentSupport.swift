@@ -8,6 +8,7 @@ import Foundation
 /// values are stored in the saved order, so cases are never renamed.
 enum NotchAgentCard: String, CaseIterable, Identifiable {
     case limits, spend, live, trend, models, projects, activity, resets
+    case forkWaiting, forkTime, forkResume  // Fork: ForkAgentCards
 
     var id: String { rawValue }
 
@@ -21,6 +22,7 @@ enum NotchAgentCard: String, CaseIterable, Identifiable {
         case .projects: return "folder"
         case .activity: return "square.grid.3x3.fill"
         case .resets: return "arrow.counterclockwise.circle"
+        case .forkWaiting, .forkTime, .forkResume: return ForkAgentCardsLogic.symbol(self)  // Fork
         }
     }
 
@@ -28,7 +30,7 @@ enum NotchAgentCard: String, CaseIterable, Identifiable {
     var fullWidth: Bool { self == .trend || self == .activity }
 
     /// Cards that cover the period chosen in the island's top row.
-    var followsPeriod: Bool { self == .spend || self == .trend || self == .models || self == .projects }
+    var followsPeriod: Bool { self == .spend || self == .trend || self == .models || self == .projects || self == .forkTime }  // Fork: time per project
 }
 
 /// What the closed island shows beside the camera while an agent works.
@@ -113,7 +115,7 @@ enum NotchAgentSupport {
 
     static func cards(in defaults: UserDefaults = .standard) -> [NotchAgentCard] {
         let hidden = hiddenCards(in: defaults)
-        return orderedCards(in: defaults).filter { !hidden.contains($0) }
+        return ForkAgentCardsLogic.arranged(orderedCards(in: defaults).filter { !hidden.contains($0) })  // Fork: Waiting first, while a session waits
     }
 
     /// Added Codex accounts have cards only in the Limits card's place.

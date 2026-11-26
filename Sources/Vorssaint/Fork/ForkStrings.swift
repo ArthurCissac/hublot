@@ -1021,19 +1021,146 @@ struct ForkChromeStrings {
     )
 }
 
-/// The texts of lot 8: battery alerts, charger sounds, the pinned device.
+/// The texts of lot 8: the battery item and its panel, battery alerts,
+/// their halo and sounds, the charger sounds, the pinned device.
 struct ForkBatteryStrings {
+    typealias Panel = ForkBatteryPanelLogic
+
     let title: String
+    let statusItem: String
+    let statusItemCaption: String
+    let pinnedCaption: String
     let alerts: String
     let alertsCaption: String
-    let halo: String
+    let haloSize: String
+    let haloSizeName: (Panel.HaloSize) -> String
     let powerSounds: String
-    let pinned: String
-    let none: String
-    let showInMenuBar: String
-    let pinnedCaption: String
-    let low: (_ percent: Int) -> String
-    let charged: (_ percent: Int) -> String
+    let soundNone: String
+    let soundHublot: String
+    let soundMacOS: String
+    let listen: String
+    let hublotSoundName: (ForkBatteryLogic.Sound) -> String
+    let tryLabel: String
+    let plugged: String
+    let unplugged: String
+    let bluetoothAsk: String
+    let bluetoothAllow: String
+    let bluetoothRefused: String
+    let openSettings: String
+    let bluetoothOff: String
+    let onPowerNotCharging: String
+    let search: String
+    let searching: String
+    let noDevices: String
+    let away: (_ minutesAgo: Int?) -> String
+    let pin: String
+    let unpin: String
+    let chartEmpty: String
+    let voltage: String
+    let current: String
+    let connected: String
+    let watts: (Double) -> String
+    let volts: (Double) -> String
+    let percent: (Int) -> String
+    let duration: (_ time: (hours: Int, minutes: Int)) -> String
+    let remainingTitle: (Int) -> String
+    let emptyIn: (String) -> String
+    let plugNow: String
+    let chargedTitle: (Int) -> String
+    let fullIn: (String) -> String
+    let chargeDone: String
+    let chargerIn: String
+    let chargerOut: String
+    let slowCharger: (Int) -> String
+    let deviceCharged: (Int) -> String
+    let previewDevice: String
+    let lowAlerts: String
+    let lowAlertsCaption: String
+    let chargedAlerts: String
+    let chargedAlertsCaption: String
+    let deviceAlerts: String
+    let deviceAlertsCaption: String
+    let kindName: (ForkBatteryAlertRules.Kind) -> String
+    let addAlert: String
+    let delete: String
+    let test: String
+    let level: String
+    let colorLabel: String
+    let tintName: (ForkBatteryAlertRules.Tint) -> String
+    let position: String
+    let positionName: (ForkBatteryAlertRules.Position) -> String
+    let sound: String
+    let soundOff: String
+    let glow: String
+    let glowShort: String
+    let sticky: String
+    let stickyShort: String
+    let pillSize: String
+    let pillSizeName: (ForkBatteryAlertRules.PillSize) -> String
+    let powerAlerts: String
+    let powerPill: String
+    let mySounds: String
+    let importSound: String
+    let importRefused: String
+    let infoCard: String
+    let connectedDevices: String
+    let historyTitle: String
+    let flowTitle: String
+    let hoursName: (Int) -> String
+    let settingsRow: String
+    let macBatterySettings: String
+    let hideItem: String
+    let timeLeftCaps: String
+    let timeToFullCaps: String
+    let chargingShort: String
+    let onBatteryShort: String
+    let healthTitle: String
+    let healthHelp: String
+    let healthName: (ForkBatteryDetailsLogic.Health) -> String
+    let cyclesCaption: String
+    let healthAdvice: String
+    let healthAdvicePoor: String
+    let temperatureTitle: String
+    let temperatureHelp: String
+    let warmthName: (ForkBatteryDetailsLogic.Warmth) -> String
+    let warmthAdvice: (ForkBatteryDetailsLogic.Warmth) -> String
+    let powerTitle: String
+    let powerHelp: String
+    let usage: String
+    let discharging: String
+    let idle: String
+    let capacityTitle: String
+    let capacityHelp: String
+    let remaining: String
+    let currentFull: String
+    let designCapacity: String
+    let milliamps: (Double) -> String
+    let milliampHours: (Int) -> String
+    let flowCharger: String
+    let flowBattery: String
+    let flowMac: String
+    let iconSection: String
+    let iconNumber: String
+    let iconColors: String
+    let iconText: String
+    let iconTextName: (ForkBatteryMenuLogic.IconText) -> String
+    let iconLarge: String
+    let pinnedDevices: String
+    let pinAdd: String
+    let noPinned: String
+    let moveUp: String
+    let moveDown: String
+    let appsCard: String
+    let periodName: (ForkAppEnergyLogic.Period) -> String
+    let appsEmpty: String
+    let wattHours: (Double) -> String
+    let appDrift: (String) -> String
+    let appAlerts: String
+    let appThreshold: (Int) -> String
+    let shortcutToggle: String
+    let shortcutCaption: String
+    let shortcutWaiting: String
+    let tightIcon: String
 
     static var current: ForkBatteryStrings {
         L10n.shared.language == .fr ? french : english
@@ -1041,32 +1168,450 @@ struct ForkBatteryStrings {
 
     static let english = ForkBatteryStrings(
         title: "Battery",
+        statusItem: "Battery item in the menu bar",
+        statusItemCaption: "Shows the Mac’s level, with the pinned device beside it. A click opens the details of the battery and of your devices: iPhone, iPad, AirPods, mouse, keyboard.",
+        pinnedCaption: "Your iPhone and iPad are connected over Bluetooth when they are near the Mac, and send their level when it changes. Out of range, the menu bar shows a dash. Pin a device here or from the panel.",
         alerts: "Battery alerts",
-        alertsCaption: "At 20 % (orange), 15 % (yellow) and 5 % (red) on battery, and when charging reaches 80 % (green): a banner at the top of the screen and a sound.",
-        halo: "Coloured halo round the screen for low battery",
+        alertsCaption: "Pills at the top or in the middle of the screen, with a halo and a sound, set one by one. Device alerts work while the battery item shows.",
+        haloSize: "Halo size",
+        haloSizeName: { size in
+            switch size {
+            case .thin: return "Thin"
+            case .medium: return "Medium"
+            case .large: return "Large"
+            }
+        },
         powerSounds: "Sound when the charger is plugged in or out",
-        pinned: "Device pinned in the menu bar",
-        none: "None: the lowest battery",
-        showInMenuBar: "Show device batteries in the menu bar",
-        pinnedCaption: "The pinned device shows in place of the lowest battery. Devices appear here once their batteries have been read, with the menu bar item on.",
-        low: { "Battery at \($0) %" },
-        charged: { "Battery charged to \($0) %" }
+        soundNone: "None",
+        soundHublot: "Hublot",
+        soundMacOS: "macOS",
+        listen: "Listen",
+        hublotSoundName: { sound in
+            switch sound {
+            case .low: return "Falling"
+            case .critical: return "Warning"
+            case .charged: return "Rising"
+            case .plugged: return "Plug in"
+            case .unplugged: return "Unplug"
+            case .chime: return "Chime"
+            case .ping: return "Ping"
+            }
+        },
+        tryLabel: "Try:",
+        plugged: "Plugged in",
+        unplugged: "Unplugged",
+        bluetoothAsk: "iPhone and iPad batteries are read over Bluetooth. macOS asks for permission once.",
+        bluetoothAllow: "Allow Bluetooth",
+        bluetoothRefused: "Bluetooth is not allowed: iPhone and iPad batteries cannot be read.",
+        openSettings: "Open Settings",
+        bluetoothOff: "Bluetooth is off: iPhone and iPad batteries cannot be read.",
+        onPowerNotCharging: "Plugged in, not charging",
+        search: "Search",
+        searching: "Searching…",
+        noDevices: "No device found yet. Keep your iPhone or iPad near the Mac, unlocked, then search.",
+        away: { minutes in
+            guard let minutes else { return "Out of range" }
+            if minutes < 1 { return "Out of range · just now" }
+            if minutes < 60 { return "Out of range · \(minutes) min ago" }
+            return "Out of range · \(minutes / 60) h ago"
+        },
+        pin: "Pin in the menu bar",
+        unpin: "Unpin from the menu bar",
+        chartEmpty: "The chart fills in over the hours, while the battery item is on.",
+        voltage: "Voltage",
+        current: "Current",
+        connected: "Connected",
+        watts: { ForkBatteryDetailsLogic.signed($0, unit: "W", locale: Locale(identifier: "en_US"), space: " ") },
+        volts: { ForkBatteryDetailsLogic.number($0, digits: 2, unit: "V", locale: Locale(identifier: "en_US"), space: " ") },
+        percent: { "\($0)%" },
+        duration: { $0.hours > 0 ? "\($0.hours) h \(String(format: "%02d", $0.minutes))" : "\($0.minutes) min" },
+        remainingTitle: { "\($0)% left" },
+        emptyIn: { "Empty in \($0)" },
+        plugNow: "Plug in the charger now",
+        chargedTitle: { "Charged to \($0)%" },
+        fullIn: { "Full in \($0)" },
+        chargeDone: "Fully charged",
+        chargerIn: "Charger plugged in",
+        chargerOut: "Charger unplugged",
+        slowCharger: { "Slow charger · \($0) W" },
+        deviceCharged: { "Charged to \($0)%" },
+        previewDevice: "iPhone",
+        lowAlerts: "Low battery alerts",
+        lowAlertsCaption: "When the battery falls under a level, on battery or with a charger too weak.",
+        chargedAlerts: "Charge alerts",
+        chargedAlertsCaption: "When charging reaches a level.",
+        deviceAlerts: "Device alerts",
+        deviceAlertsCaption: "iPhone, iPad, AirPods, mouse, keyboard: low, or charged to a level.",
+        kindName: { $0 == .low ? "Low" : "Charged" },
+        addAlert: "Add",
+        delete: "Delete",
+        test: "Test",
+        level: "Level",
+        colorLabel: "Colour",
+        tintName: { tint in
+            switch tint {
+            case .red: return "Red"
+            case .orange: return "Orange"
+            case .yellow: return "Yellow"
+            case .green: return "Green"
+            case .blue: return "Blue"
+            }
+        },
+        position: "Position",
+        positionName: { $0 == .top ? "Top of screen" : "Centre of screen" },
+        sound: "Sound",
+        soundOff: "No sound",
+        glow: "Halo round the screen",
+        glowShort: "Halo",
+        sticky: "Stay until clicked",
+        stickyShort: "Stays",
+        pillSize: "Alert size",
+        pillSizeName: { size in
+            switch size {
+            case .extraSmall: return "Extra small"
+            case .small: return "Small"
+            case .standard: return "Default"
+            case .large: return "Large"
+            }
+        },
+        powerAlerts: "Charger",
+        powerPill: "A pill when the charger is plugged in or out, with its watts",
+        mySounds: "My sounds",
+        importSound: "Import a sound…",
+        importRefused: "This file is not a supported sound (AIFF, WAV, MP3, M4A, CAF, 5 MB at most).",
+        infoCard: "Battery information",
+        connectedDevices: "Connected devices",
+        historyTitle: "History",
+        flowTitle: "Power flow",
+        hoursName: { "\($0) h" },
+        settingsRow: "Settings…",
+        macBatterySettings: "macOS Battery settings…",
+        hideItem: "Hide the battery item",
+        timeLeftCaps: "TIME LEFT",
+        timeToFullCaps: "UNTIL FULL",
+        chargingShort: "Charging",
+        onBatteryShort: "On battery",
+        healthTitle: "Battery health",
+        healthHelp: "What a full charge holds now against when the battery was new. Apple advises a service under 80 %.",
+        healthName: { health in
+            switch health {
+            case .good: return "Good"
+            case .fair: return "Fair"
+            case .poor: return "Poor"
+            }
+        },
+        cyclesCaption: "Cycles",
+        healthAdvice: "Consider having the battery checked by Apple",
+        healthAdvicePoor: "The battery should be replaced by Apple",
+        temperatureTitle: "Temperature",
+        temperatureHelp: "Read from the battery’s sensors. It works best between 10 and 40 °C.",
+        warmthName: { warmth in
+            switch warmth {
+            case .cold: return "Cold"
+            case .normal: return "Normal"
+            case .warm: return "Warm"
+            case .hot: return "Hot"
+            }
+        },
+        warmthAdvice: { warmth in
+            switch warmth {
+            case .cold: return "Charging slows down"
+            case .normal: return "Optimal performance"
+            case .warm: return "Keep it out of the sun"
+            case .hot: return "Let the Mac cool down"
+            }
+        },
+        powerTitle: "Power & electrical",
+        powerHelp: "What the Mac uses, and the battery’s voltage and current, read live.",
+        usage: "Power usage",
+        discharging: "Discharging",
+        idle: "Idle",
+        capacityTitle: "Capacity details",
+        capacityHelp: "What is left now, what a full charge holds today, and what it held new.",
+        remaining: "Remaining",
+        currentFull: "Current full",
+        designCapacity: "Design capacity",
+        milliamps: { "\(ForkBatteryDetailsLogic.grouped(Int($0.rounded()), locale: Locale(identifier: "en_US"))) mA" },
+        milliampHours: { "\(ForkBatteryDetailsLogic.grouped($0, locale: Locale(identifier: "en_US"))) mAh" },
+        flowCharger: "Charger",
+        flowBattery: "Battery",
+        flowMac: "Mac",
+        iconSection: "Menu bar icon",
+        iconNumber: "Level inside the battery",
+        iconColors: "Colours following the level",
+        iconText: "Show",
+        iconTextName: { mode in
+            switch mode {
+            case .percent: return "Percent"
+            case .time: return "Time left"
+            case .both: return "Time and percent"
+            }
+        },
+        iconLarge: "Large icon",
+        pinnedDevices: "Pinned devices",
+        pinAdd: "Pin a device",
+        noPinned: "No device pinned",
+        moveUp: "Move left",
+        moveDown: "Move right",
+        appsCard: "Energy by app",
+        periodName: { period in
+            switch period {
+            case .live: return "Live"
+            case .day: return "24 h"
+            case .week: return "7 d"
+            case .month: return "30 d"
+            }
+        },
+        appsEmpty: "Nothing measured yet: figures come within a minute while the battery item shows.",
+        wattHours: { ForkBatteryDetailsLogic.number($0, digits: $0 < 10 ? 1 : 0, unit: "Wh", locale: Locale(identifier: "en_US"), space: " ") },
+        appDrift: { "Drawing a lot · \($0)" },
+        appAlerts: "Tell me when an app draws a lot on battery",
+        appThreshold: { "From \($0) W for 3 minutes" },
+        shortcutToggle: "Shortcut to open the panel",
+        shortcutCaption: "Then I for the battery information, D for the devices.",
+        shortcutWaiting: "Type the shortcut",
+        tightIcon: "Hublot icon without empty sides (from its next change)"
     )
 
     static let french = ForkBatteryStrings(
         title: "Batterie",
+        statusItem: "Icône Batterie dans la barre des menus",
+        statusItemCaption: "Affiche le niveau du Mac, avec l’appareil épinglé à côté. Un clic ouvre le détail de la batterie et de tes appareils : iPhone, iPad, AirPods, souris, clavier.",
+        pinnedCaption: "L’iPhone et l’iPad sont connectés en Bluetooth quand ils sont près du Mac, et envoient leur niveau quand il change. Hors de portée, la barre des menus affiche un tiret. Épingle un appareil ici ou depuis le panneau.",
         alerts: "Alertes de batterie",
-        alertsCaption: "À 20 % (orange), 15 % (jaune) et 5 % (rouge) sur batterie, et quand la charge atteint 80 % (vert) : un bandeau en haut de l’écran et un son.",
-        halo: "Halo coloré autour de l’écran quand la batterie est faible",
+        alertsCaption: "Des alertes en pilule en haut ou au centre de l’écran, avec halo et son, réglées une par une. Les alertes des appareils marchent tant que l’icône Batterie est affichée.",
+        haloSize: "Taille du halo",
+        haloSizeName: { size in
+            switch size {
+            case .thin: return "Fin"
+            case .medium: return "Moyen"
+            case .large: return "Large"
+            }
+        },
         powerSounds: "Son au branchement et au débranchement du chargeur",
-        pinned: "Appareil épinglé dans la barre des menus",
-        none: "Aucun : la batterie la plus faible",
-        showInMenuBar: "Afficher les batteries des appareils dans la barre des menus",
-        pinnedCaption: "L’appareil épinglé s’affiche à la place de la batterie la plus faible. Les appareils apparaissent ici une fois leur batterie lue, avec l’affichage dans la barre des menus activé.",
-        low: { "Batterie à \($0) %" },
-        charged: { "Batterie chargée à \($0) %" }
+        soundNone: "Aucun",
+        soundHublot: "Hublot",
+        soundMacOS: "macOS",
+        listen: "Écouter",
+        hublotSoundName: { sound in
+            switch sound {
+            case .low: return "Descente"
+            case .critical: return "Alerte"
+            case .charged: return "Montée"
+            case .plugged: return "Branché"
+            case .unplugged: return "Débranché"
+            case .chime: return "Carillon"
+            case .ping: return "Ping"
+            }
+        },
+        tryLabel: "Essayer :",
+        plugged: "Branché",
+        unplugged: "Débranché",
+        bluetoothAsk: "La batterie de l’iPhone et de l’iPad se lit par Bluetooth. macOS demande l’autorisation une fois.",
+        bluetoothAllow: "Autoriser le Bluetooth",
+        bluetoothRefused: "Bluetooth refusé : la batterie de l’iPhone et de l’iPad ne peut pas être lue.",
+        openSettings: "Ouvrir les réglages",
+        bluetoothOff: "Bluetooth coupé : la batterie de l’iPhone et de l’iPad ne peut pas être lue.",
+        onPowerNotCharging: "Branché, charge en pause",
+        search: "Rechercher",
+        searching: "Recherche…",
+        noDevices: "Aucun appareil trouvé pour l’instant. Garde l’iPhone ou l’iPad près du Mac, déverrouillé, puis lance une recherche.",
+        away: { minutes in
+            guard let minutes else { return "Hors de portée" }
+            if minutes < 1 { return "Hors de portée · à l’instant" }
+            if minutes < 60 { return "Hors de portée · il y a \(minutes) min" }
+            return "Hors de portée · il y a \(minutes / 60) h"
+        },
+        pin: "Épingler dans la barre des menus",
+        unpin: "Retirer de la barre des menus",
+        chartEmpty: "La courbe se remplit au fil des heures, tant que l’icône Batterie est affichée.",
+        voltage: "Tension",
+        current: "Courant",
+        connected: "Connecté",
+        watts: { ForkBatteryDetailsLogic.signed($0, unit: "W", locale: Locale(identifier: "fr_FR"), space: "\u{202F}") },
+        volts: { ForkBatteryDetailsLogic.number($0, digits: 2, unit: "V", locale: Locale(identifier: "fr_FR"), space: "\u{202F}") },
+        percent: { "\($0)\u{202F}%" },
+        duration: { $0.hours > 0 ? "\($0.hours) h \(String(format: "%02d", $0.minutes))" : "\($0.minutes) min" },
+        remainingTitle: { "\($0)\u{202F}% restants" },
+        emptyIn: { "Vide dans \($0)" },
+        plugNow: "Branche le chargeur maintenant",
+        chargedTitle: { "Chargée à \($0)\u{202F}%" },
+        fullIn: { "Pleine dans \($0)" },
+        chargeDone: "Charge terminée",
+        chargerIn: "Chargeur branché",
+        chargerOut: "Chargeur débranché",
+        slowCharger: { "Chargeur lent · \($0)\u{202F}W" },
+        deviceCharged: { "Chargé à \($0)\u{202F}%" },
+        previewDevice: "iPhone",
+        lowAlerts: "Alertes de batterie faible",
+        lowAlertsCaption: "Quand la batterie passe sous un seuil, sur batterie ou avec un chargeur trop faible.",
+        chargedAlerts: "Alertes de charge",
+        chargedAlertsCaption: "Quand la charge atteint un seuil.",
+        deviceAlerts: "Alertes des appareils",
+        deviceAlertsCaption: "iPhone, iPad, AirPods, souris, clavier : batterie faible, ou chargée à un seuil.",
+        kindName: { $0 == .low ? "Faible" : "Chargé" },
+        addAlert: "Ajouter",
+        delete: "Supprimer",
+        test: "Tester",
+        level: "Seuil",
+        colorLabel: "Couleur",
+        tintName: { tint in
+            switch tint {
+            case .red: return "Rouge"
+            case .orange: return "Orange"
+            case .yellow: return "Jaune"
+            case .green: return "Vert"
+            case .blue: return "Bleu"
+            }
+        },
+        position: "Position",
+        positionName: { $0 == .top ? "Haut de l’écran" : "Centre de l’écran" },
+        sound: "Son",
+        soundOff: "Sans son",
+        glow: "Halo autour de l’écran",
+        glowShort: "Halo",
+        sticky: "Rester affichée jusqu’au clic",
+        stickyShort: "Reste",
+        pillSize: "Taille des alertes",
+        pillSizeName: { size in
+            switch size {
+            case .extraSmall: return "Très petite"
+            case .small: return "Petite"
+            case .standard: return "Normale"
+            case .large: return "Grande"
+            }
+        },
+        powerAlerts: "Chargeur",
+        powerPill: "Une pilule au branchement et au débranchement, avec la puissance du chargeur",
+        mySounds: "Mes sons",
+        importSound: "Importer un son…",
+        importRefused: "Ce fichier n’est pas un son pris en charge (AIFF, WAV, MP3, M4A, CAF, 5 Mo au plus).",
+        infoCard: "Informations batterie",
+        connectedDevices: "Appareils connectés",
+        historyTitle: "Historique",
+        flowTitle: "Flux d’énergie",
+        hoursName: { "\($0) h" },
+        settingsRow: "Réglages…",
+        macBatterySettings: "Réglages Batterie de macOS…",
+        hideItem: "Masquer l’icône Batterie",
+        timeLeftCaps: "TEMPS RESTANT",
+        timeToFullCaps: "PLEINE DANS",
+        chargingShort: "En charge",
+        onBatteryShort: "Sur batterie",
+        healthTitle: "Santé de la batterie",
+        healthHelp: "Ce que contient une charge complète aujourd’hui, comparé à la batterie neuve. Apple conseille une révision sous 80 %.",
+        healthName: { health in
+            switch health {
+            case .good: return "Bonne"
+            case .fair: return "Correcte"
+            case .poor: return "Faible"
+            }
+        },
+        cyclesCaption: "Cycles",
+        healthAdvice: "Pense à faire contrôler la batterie par Apple",
+        healthAdvicePoor: "La batterie devrait être remplacée par Apple",
+        temperatureTitle: "Température",
+        temperatureHelp: "Lue par les capteurs de la batterie. Elle fonctionne au mieux entre 10 et 40 °C.",
+        warmthName: { warmth in
+            switch warmth {
+            case .cold: return "Froide"
+            case .normal: return "Normale"
+            case .warm: return "Chaude"
+            case .hot: return "Très chaude"
+            }
+        },
+        warmthAdvice: { warmth in
+            switch warmth {
+            case .cold: return "La charge ralentit"
+            case .normal: return "Performances optimales"
+            case .warm: return "Évite le soleil"
+            case .hot: return "Laisse refroidir le Mac"
+            }
+        },
+        powerTitle: "Puissance et électricité",
+        powerHelp: "Ce que consomme le Mac, la tension et le courant de la batterie, en direct.",
+        usage: "Consommation",
+        discharging: "En décharge",
+        idle: "Au repos",
+        capacityTitle: "Détails de capacité",
+        capacityHelp: "Ce qui reste, ce que contient une charge complète aujourd’hui, et ce qu’elle contenait neuve.",
+        remaining: "Restante",
+        currentFull: "Pleine aujourd’hui",
+        designCapacity: "À l’origine",
+        milliamps: { "\(ForkBatteryDetailsLogic.grouped(Int($0.rounded()), locale: Locale(identifier: "fr_FR")))\u{202F}mA" },
+        milliampHours: { "\(ForkBatteryDetailsLogic.grouped($0, locale: Locale(identifier: "fr_FR")))\u{202F}mAh" },
+        flowCharger: "Chargeur",
+        flowBattery: "Batterie",
+        flowMac: "Mac",
+        iconSection: "Icône de la barre des menus",
+        iconNumber: "Niveau dans la batterie",
+        iconColors: "Couleurs selon le niveau",
+        iconText: "Afficher",
+        iconTextName: { mode in
+            switch mode {
+            case .percent: return "Pourcentage"
+            case .time: return "Temps restant"
+            case .both: return "Temps et pourcentage"
+            }
+        },
+        iconLarge: "Grande icône",
+        pinnedDevices: "Appareils épinglés",
+        pinAdd: "Épingler un appareil",
+        noPinned: "Aucun appareil épinglé",
+        moveUp: "Vers la gauche",
+        moveDown: "Vers la droite",
+        appsCard: "Consommation des apps",
+        periodName: { period in
+            switch period {
+            case .live: return "En direct"
+            case .day: return "24 h"
+            case .week: return "7 j"
+            case .month: return "30 j"
+            }
+        },
+        appsEmpty: "Rien de mesuré pour l’instant : les chiffres arrivent dans la minute, tant que l’icône Batterie est affichée.",
+        wattHours: { ForkBatteryDetailsLogic.number($0, digits: $0 < 10 ? 1 : 0, unit: "Wh", locale: Locale(identifier: "fr_FR"), space: "\u{202F}") },
+        appDrift: { "Consomme beaucoup · \($0)" },
+        appAlerts: "Prévenir quand une app consomme beaucoup sur batterie",
+        appThreshold: { "À partir de \($0)\u{202F}W pendant 3 minutes" },
+        shortcutToggle: "Raccourci pour ouvrir le panneau",
+        shortcutCaption: "Puis I pour les informations batterie, D pour les appareils.",
+        shortcutWaiting: "Tape le raccourci",
+        tightIcon: "Icône Hublot sans marges vides (à son prochain changement)"
     )
 }
+
+extension ForkBatteryStrings {
+    /// A pill's title and the line under it.
+    func pillText(_ message: ForkBatteryAlertRules.Message) -> (title: String, subtitle: String?) {
+        func time(_ minutes: Int?) -> String? {
+            ForkBatteryPanelLogic.duration(minutes.map { TimeInterval($0 * 60) }).map(duration)
+        }
+        switch message {
+        case .low(let percent, let minutes):
+            return (remainingTitle(percent), time(minutes).map(emptyIn))
+        case .critical(let percent):
+            return (remainingTitle(percent), plugNow)
+        case .charged(let percent, let minutes):
+            return (chargedTitle(percent), time(minutes).map(fullIn) ?? (percent >= 100 ? chargeDone : nil))
+        case .plugged(let level, let watts, let slow, let minutes):
+            // The level first, then the charger's power, then the time to full.
+            if slow, let watts { return (chargerIn, "\(percent(level)) · \(slowCharger(watts))") }
+            let parts = [percent(level), watts.map { "\($0) W" }, time(minutes).map(fullIn)].compactMap { $0 }
+            return (chargerIn, parts.joined(separator: " · "))
+        case .unplugged(let level, let minutes):
+            let parts = [percent(level), time(minutes).map(emptyIn)].compactMap { $0 }
+            return (chargerOut, parts.joined(separator: " · "))
+        case .deviceLow(let name, let percent):
+            return (name, remainingTitle(percent))
+        case .deviceCharged(let name, let percent):
+            return (name, deviceCharged(percent))
+        case .appDrift(let name, let watts):
+            return (name, appDrift(self.watts(watts).replacingOccurrences(of: "+", with: "")))
+        }
+    }
+}
+
 
 /// The texts of lot 9: the disk map and the antivirus.
 struct ForkDiskToolsStrings {
@@ -2043,7 +2588,7 @@ struct ForkQuickActionStrings {
         titles: [.tasks: "Tasks", .colorPicker: "Color Picker", .screenText: "Screen Text", .phoneSite: "Site on Phone",
                  .ambient: "Background Sound", .note: "Quick Note", .clipboard: "Clipboard",
                  .presentation: "Presentation", .camera: "Camera Mirror", .soundOutput: "Sound Output",
-                 .smartScan: "One-Click Scan", .recordScreen: "Record Screen", .weather: "Weather"],
+                 .smartScan: "One-Click Scan", .recordScreen: "Record Screen", .weather: "Weather", .translate: "Translate", .home: "Home", .printer: "Printer"],
         noDevServer: "No dev server running",
         added: "Added actions",
         focusReady: "Do Not Disturb shortcuts found: notifications stay quiet during the demo.",
@@ -2059,7 +2604,7 @@ struct ForkQuickActionStrings {
         titles: [.tasks: "Tâches", .colorPicker: "Pipette", .screenText: "Texte de l’écran", .phoneSite: "Site sur téléphone",
                  .ambient: "Bruit de fond", .note: "Note rapide", .clipboard: "Presse-papiers",
                  .presentation: "Présentation", .camera: "Miroir caméra", .soundOutput: "Sortie audio",
-                 .smartScan: "Analyse en un clic", .recordScreen: "Enregistrer l’écran", .weather: "Météo"],
+                 .smartScan: "Analyse en un clic", .recordScreen: "Enregistrer l’écran", .weather: "Météo", .translate: "Traduire", .home: "Maison", .printer: "Imprimante"],
         noDevServer: "Aucun serveur de dev lancé",
         added: "Actions ajoutées",
         focusReady: "Raccourcis Ne pas déranger trouvés : aucune notification pendant la démo.",
@@ -2523,7 +3068,14 @@ struct ForkTranslateStrings {
     let download: String
     let openSettings: String
     let failed: String
-    let nothingToTranslate: String
+    let empty: String
+    let placeholder: String
+    let translate: String
+    let automatic: String
+    let unknownLanguage: String
+    let languageHelp: String
+    let targetTitle: String
+    let targetCaption: String
     let needsNewerMacOS: String
     let needsDownload: (_ from: String, _ to: String) -> String
     let unsupported: (_ from: String, _ to: String) -> String
@@ -2548,13 +3100,20 @@ struct ForkTranslateStrings {
         download: "Download languages",
         openSettings: "Language & Region",
         failed: "The translation did not go through. Try again, or check the languages in Language & Region.",
-        nothingToTranslate: "Select some text, or copy it, then press the shortcut again.",
+        empty: "Select some text in any app, then press ⌃⌥⌘T or the island's Translate button. Or type it below.",
+        placeholder: "Type or paste a text to translate",
+        translate: "Translate",
+        automatic: "Automatic",
+        unknownLanguage: "Detected language",
+        languageHelp: "The language to translate into",
+        targetTitle: "Translate into",
+        targetCaption: "Automatic: French into English, every other language into French. A text already in the chosen language goes to French, or to English when French is chosen.",
         needsNewerMacOS: "Translation needs macOS 15 or later.",
         needsDownload: { from, to in "To translate \(from) → \(to) on this Mac, macOS needs these languages once. They then work offline." },
         unsupported: { from, to in "macOS does not translate \(from) → \(to)." },
         truncated: { "Only the first \($0) characters are translated." },
         toggle: "Translate the selection",
-        toggleCaption: "The selected text, or the clipboard's when nothing is selected, translated by macOS on this Mac, without network: French into English, every other language into French.",
+        toggleCaption: "The selected text, or the clipboard's when nothing is selected, translated by macOS on this Mac, without network, in the island's Translation page.",
         shortcut: "Shortcut ⌃⌥⌘T",
         shortcutCaption: "Translates from any app.",
         shortcutTaken: "Another app already uses ⌃⌥⌘T: the shortcut is off until it lets it go."
@@ -2570,13 +3129,20 @@ struct ForkTranslateStrings {
         download: "Télécharger les langues",
         openSettings: "Langue et région",
         failed: "La traduction n’a pas abouti. Réessayez, ou vérifiez les langues dans Langue et région.",
-        nothingToTranslate: "Sélectionnez un texte, ou copiez-le, puis refaites le raccourci.",
+        empty: "Sélectionnez un texte dans n’importe quelle app, puis ⌃⌥⌘T ou le bouton Traduire de l’île. Ou écrivez-le ci-dessous.",
+        placeholder: "Écrire ou coller un texte à traduire",
+        translate: "Traduire",
+        automatic: "Automatique",
+        unknownLanguage: "Langue détectée",
+        languageHelp: "La langue vers laquelle traduire",
+        targetTitle: "Traduire vers",
+        targetCaption: "Automatique : le français vers l’anglais, toute autre langue vers le français. Un texte déjà dans la langue choisie part vers le français, ou vers l’anglais si le français est choisi.",
         needsNewerMacOS: "La traduction demande macOS 15 ou plus récent.",
         needsDownload: { from, to in "Pour traduire \(from) → \(to) sur ce Mac, macOS a besoin de ces langues une fois. Elles marchent ensuite sans réseau." },
         unsupported: { from, to in "macOS ne traduit pas \(from) → \(to)." },
         truncated: { "Seuls les \($0) premiers caractères sont traduits." },
         toggle: "Traduire la sélection",
-        toggleCaption: "Le texte sélectionné, ou celui du presse-papiers sans sélection, traduit par macOS sur ce Mac, sans réseau : le français vers l’anglais, toute autre langue vers le français.",
+        toggleCaption: "Le texte sélectionné, ou celui du presse-papiers sans sélection, traduit par macOS sur ce Mac, sans réseau, dans la page Traduction de l’île.",
         shortcut: "Raccourci ⌃⌥⌘T",
         shortcutCaption: "Traduit depuis n’importe quelle app.",
         shortcutTaken: "Une autre app utilise déjà ⌃⌥⌘T : le raccourci reste coupé tant qu’elle ne le libère pas."
@@ -2624,5 +3190,417 @@ struct ForkCareHubStrings {
         resultsReady: "Résultats prêts",
         running: "En cours…",
         done: "Terminé"
+    )
+}
+
+/// The texts of the AI page's Claude additions: the Waiting, Time per project and Pick up again cards.
+struct ForkAgentCardsStrings {
+    let french: Bool
+    let waitingTitle: String
+    let several: (Int) -> String
+    let nobodyWaits: String
+    let reasons: [ForkClaudeSessionsLogic.Wait: String]
+    let goThere: String
+    let noTime: String
+    let noProject: String
+    let openSession: (String) -> String
+    let openLatest: (String) -> String
+    let newSessionIn: (String) -> String
+    let newSession: String
+    let showInFinder: String
+    let alertTitle: String
+    let alertCaption: String
+
+    func title(_ card: NotchAgentCard) -> String { ForkAgentCardsLogic.title(card, french: french) }
+    func reason(_ wait: ForkClaudeSessionsLogic.Wait) -> String { reasons[wait] ?? "" }
+
+    static var current: ForkAgentCardsStrings {
+        L10n.shared.language == .fr ? french : english
+    }
+
+    static let english = ForkAgentCardsStrings(
+        french: false,
+        waitingTitle: "Claude is waiting for you",
+        several: { "\($0) sessions" },
+        nobodyWaits: "No session is waiting.",
+        reasons: [.question: "Has a question", .plan: "Waits for the plan's approval", .answer: "Waits for your answer"],
+        goThere: "Go",
+        noTime: "No work in this period.",
+        noProject: "No recent project.",
+        openSession: { "Open the session in progress: \($0)" },
+        openLatest: { "Open the latest session of \($0)" },
+        newSessionIn: { "No session in progress: new Claude Code session in \($0)" },
+        newSession: "New Claude Code session in this folder",
+        showInFinder: "Show in Finder",
+        alertTitle: "Claude session waiting",
+        alertCaption: "A notice in the island when a Claude Code session waits for a permission, an answer or a plan's approval."
+    )
+
+    static let french = ForkAgentCardsStrings(
+        french: true,
+        waitingTitle: "Claude vous attend",
+        several: { "\($0) sessions" },
+        nobodyWaits: "Aucune session n’attend.",
+        reasons: [.question: "A une question", .plan: "Attend la validation du plan", .answer: "Attend votre réponse"],
+        goThere: "Y aller",
+        noTime: "Aucun travail sur la période.",
+        noProject: "Aucun projet récent.",
+        openSession: { "Ouvrir la session en cours : \($0)" },
+        openLatest: { "Ouvrir la dernière session de \($0)" },
+        newSessionIn: { "Aucune session en cours : nouvelle session Claude Code dans \($0)" },
+        newSession: "Nouvelle session Claude Code dans ce dossier",
+        showInFinder: "Afficher dans le Finder",
+        alertTitle: "Session Claude en attente",
+        alertCaption: "Un message dans l’île quand une session Claude Code attend une autorisation, une réponse ou la validation d’un plan."
+    )
+}
+
+/// The texts of the AI page in Hublot's style and of Explorer's editing.
+struct ForkAgentWidgetStrings {
+    let edit: String
+    let done: String
+    let perDay: (String) -> String
+    let agentsHint: String
+    let explorerHint: String
+    let styleTitle: String
+    let styleCaption: String
+    let explorerTitle: String
+    let explorerCaption: String
+    let goThere: String
+
+    static var current: ForkAgentWidgetStrings {
+        L10n.shared.language == .fr ? french : english
+    }
+
+    static let english = ForkAgentWidgetStrings(
+        edit: "Edit",
+        done: "Done",
+        perDay: { "avg. \($0) / day" },
+        agentsHint: "Click a widget to show or hide it.",
+        explorerHint: "Click a page to show or hide it in Explorer. It stays in the island.",
+        styleTitle: "Hublot style",
+        styleCaption: "A widget per kind of information, on a grid that always fits the island: no scrolling.",
+        explorerTitle: "Explorer on one page",
+        explorerCaption: "Explorer shows all its pages at once; the island grows taller for them.",
+        goThere: "Go"
+    )
+
+    static let french = ForkAgentWidgetStrings(
+        edit: "Modifier",
+        done: "Terminé",
+        perDay: { "moy. \($0) / jour" },
+        agentsHint: "Cliquez sur un widget pour l’afficher ou le masquer.",
+        explorerHint: "Cliquez sur une page pour l’afficher ou la masquer dans Explorer. Elle reste dans l’île.",
+        styleTitle: "Style Hublot",
+        styleCaption: "Un widget par type d’information, sur une grille qui tient toujours dans l’île : pas de défilement.",
+        explorerTitle: "Explorer sur une page",
+        explorerCaption: "Explorer montre toutes ses pages d’un coup ; l’île s’agrandit en hauteur pour elles.",
+        goThere: "Y aller"
+    )
+}
+
+// MARK: - Home page (Home Assistant)
+
+struct ForkHomeStrings {
+    let title: String
+    let toggle: String
+    let toggleCaption: String
+    let address: String
+    let addressCaption: String
+    let fallback: String
+    let fallbackCaption: String
+    let invalidAddress: String
+    let insecureAddress: String
+    let save: String
+    let token: String
+    let tokenCaption: String
+    let createToken: String
+    let forgetToken: String
+    let connection: String
+    let test: String
+    let off: String
+    let needsSetup: String
+    let needsAddress: String
+    let needsToken: String
+    let connecting: String
+    let connected: String
+    let connectedFallback: String
+    let unauthorized: String
+    let unreachable: String
+    let devices: String
+    let devicesCaption: String
+    let search: String
+    let loading: String
+    let noDevices: String
+    let notConnected: String
+    let favorite: String
+    let menuTile: String
+    let other: String
+    let empty: String
+    let choose: String
+    let edit: String
+    let done: String
+    let openSettings: String
+    let retry: String
+    let open: String
+    let close: String
+    let up: String
+    let down: String
+    let stop: String
+    let turnOn: String
+    let turnOff: String
+    let removeFavorite: String
+    let failed: String
+    let back: String
+    let pictureFailed: String
+    let confirm: String
+    let printerTile: String
+    let printerHint: String
+    let showPrinter: String
+    let showPrinterCaption: String
+    let removeFromHome: String
+
+    static var current: ForkHomeStrings {
+        L10n.shared.language == .fr ? french : english
+    }
+
+    static let english = ForkHomeStrings(
+        title: "Home",
+        toggle: "Home page (Home Assistant)",
+        toggleCaption: "Your favourite Home Assistant devices in the island and the menu: covers, lights, plugs, scenes, scripts, buttons, sensors and cameras. Locks and alarms are left out; gates and garage doors move on a second click.",
+        address: "Address",
+        addressCaption: "Your Home Assistant’s, for example http://homeassistant.local:8123. Plain http only works on your local network.",
+        fallback: "Fallback address",
+        fallbackCaption: "Optional: tried when the first one does not answer, for example your remote access (Nabu Casa).",
+        invalidAddress: "This address is not valid: only http or https, a host and a port.",
+        insecureAddress: "Off your local network, the address must start with https://.",
+        save: "Save",
+        token: "Access token",
+        tokenCaption: "In Home Assistant: your profile › Security › Long-lived access tokens. It is kept in this Mac’s Keychain only.",
+        createToken: "Create a token",
+        forgetToken: "Forget the token",
+        connection: "Connection",
+        test: "Test",
+        off: "Off",
+        needsSetup: "Enter the address and the token.",
+        needsAddress: "Enter your Home Assistant’s address above.",
+        needsToken: "Paste the access token above.",
+        connecting: "Connecting…",
+        connected: "Connected to Home Assistant.",
+        connectedFallback: "Connected through the fallback address.",
+        unauthorized: "Home Assistant refused the token: create another one.",
+        unreachable: "Home Assistant does not answer. Trying again…",
+        devices: "Devices",
+        devicesCaption: "Star: in the island. Square: also a tile in the menu (arranged with the menu’s edit button).",
+        search: "Search",
+        loading: "Loading devices…",
+        noDevices: "No device found.",
+        notConnected: "Connect Home Assistant first.",
+        favorite: "Favourite",
+        menuTile: "Menu tile",
+        other: "Other",
+        empty: "No device chosen yet.",
+        choose: "Choose devices",
+        edit: "Edit",
+        done: "Done",
+        openSettings: "Open Settings",
+        retry: "Try again",
+        open: "Open",
+        close: "Close",
+        up: "Raise",
+        down: "Lower",
+        stop: "Stop",
+        turnOn: "Turn on",
+        turnOff: "Turn off",
+        removeFavorite: "Remove from favourites",
+        failed: "The action failed",
+        back: "Back",
+        pictureFailed: "No picture from the camera",
+        confirm: "Confirm",
+        printerTile: "3D printer",
+        printerHint: "Camera and print",
+        showPrinter: "3D printer tile",
+        showPrinterCaption: "In the Home page, your Bambu Lab printer’s camera and print (the Printer page’s), a click away.",
+        removeFromHome: "Remove from Home"
+    )
+
+    static let french = ForkHomeStrings(
+        title: "Maison",
+        toggle: "Page Maison (Home Assistant)",
+        toggleCaption: "Vos appareils Home Assistant favoris dans l’île et le menu : volets, lumières, prises, scènes, scripts, boutons, capteurs et caméras. Serrures et alarmes sont exclues ; portails et portes de garage bougent au second clic.",
+        address: "Adresse",
+        addressCaption: "Celle de votre Home Assistant, par exemple http://homeassistant.local:8123. Le http simple ne marche que sur votre réseau local.",
+        fallback: "Adresse de secours",
+        fallbackCaption: "Facultative : essayée quand la première ne répond pas, par exemple votre accès à distance (Nabu Casa).",
+        invalidAddress: "Adresse invalide : seulement http ou https, un hôte et un port.",
+        insecureAddress: "En dehors de votre réseau local, l’adresse doit commencer par https://.",
+        save: "Enregistrer",
+        token: "Jeton d’accès",
+        tokenCaption: "Dans Home Assistant : votre profil › Sécurité › Jetons d’accès longue durée. Il reste dans le trousseau de ce Mac uniquement.",
+        createToken: "Créer un jeton",
+        forgetToken: "Oublier le jeton",
+        connection: "Connexion",
+        test: "Tester",
+        off: "Désactivée",
+        needsSetup: "Indiquez l’adresse et le jeton.",
+        needsAddress: "Indiquez l’adresse de votre Home Assistant ci-dessus.",
+        needsToken: "Collez le jeton d’accès ci-dessus.",
+        connecting: "Connexion…",
+        connected: "Connecté à Home Assistant.",
+        connectedFallback: "Connecté par l’adresse de secours.",
+        unauthorized: "Home Assistant a refusé le jeton : créez-en un autre.",
+        unreachable: "Home Assistant ne répond pas. Nouvel essai…",
+        devices: "Appareils",
+        devicesCaption: "Étoile : dans l’île. Carré : aussi en tuile dans le menu (rangée avec le bouton Modifier du menu).",
+        search: "Rechercher",
+        loading: "Chargement des appareils…",
+        noDevices: "Aucun appareil trouvé.",
+        notConnected: "Connectez d’abord Home Assistant.",
+        favorite: "Favori",
+        menuTile: "Tuile du menu",
+        other: "Autres",
+        empty: "Aucun appareil choisi pour l’instant.",
+        choose: "Choisir des appareils",
+        edit: "Modifier",
+        done: "Terminé",
+        openSettings: "Ouvrir les réglages",
+        retry: "Réessayer",
+        open: "Ouvrir",
+        close: "Fermer",
+        up: "Monter",
+        down: "Descendre",
+        stop: "Arrêter",
+        turnOn: "Allumer",
+        turnOff: "Éteindre",
+        removeFavorite: "Retirer des favoris",
+        failed: "L’action a échoué",
+        back: "Retour",
+        pictureFailed: "Pas d’image de la caméra",
+        confirm: "Confirmer",
+        printerTile: "Imprimante 3D",
+        printerHint: "Caméra et impression",
+        showPrinter: "Tuile Imprimante 3D",
+        showPrinterCaption: "Dans la page Maison, la caméra et l’impression de votre imprimante Bambu Lab (celles de la page Imprimante), à un clic.",
+        removeFromHome: "Retirer de Maison"
+    )
+}
+
+// MARK: - Printer page (Bambu Lab)
+
+struct ForkBambuStrings {
+    let title: String
+    let toggle: String
+    let toggleCaption: String
+    let search: String
+    let searching: String
+    let noneFound: String
+    let choose: String
+    let address: String
+    let addressCaption: String
+    let invalidAddress: String
+    let serial: String
+    let serialCaption: String
+    let code: String
+    let codeCaption: String
+    let forgetCode: String
+    let save: String
+    let connection: String
+    let test: String
+    let off: String
+    let needsSetup: String
+    let idle: String
+    let connecting: String
+    let live: String
+    let refused: String
+    let unreachable: String
+    let certificateChanged: String
+    let forgetCertificate: String
+    let cameraUnavailable: String
+    let layer: String
+    let nozzle: String
+    let bed: String
+    let noJob: String
+    let openSettings: String
+    let retry: String
+    let left: (String) -> String
+
+    static var current: ForkBambuStrings {
+        L10n.shared.language == .fr ? french : english
+    }
+
+    static let english = ForkBambuStrings(
+        title: "Printer",
+        toggle: "Printer page (Bambu Lab)",
+        toggleCaption: "Your Bambu Lab printer live in the island, without the cloud nor Home Assistant: camera, progress, time left, layers, temperatures. Made for the A1 and the P1.",
+        search: "Find the printer",
+        searching: "Searching the network…",
+        noneFound: "No printer found: check that it is on and on the same network, or enter its address.",
+        choose: "Choose",
+        address: "Printer address",
+        addressCaption: "Its IP address on your local network (Settings › Network on the printer’s screen).",
+        invalidAddress: "A local address only, for example 192.168.1.40.",
+        serial: "Serial number",
+        serialCaption: "Found on its own; otherwise on the printer’s screen (Settings › Device).",
+        code: "Access code",
+        codeCaption: "On the printer’s screen: Settings › Network (WLAN) › Access code. It is kept in this Mac’s Keychain only.",
+        forgetCode: "Forget the code",
+        save: "Save",
+        connection: "Connection",
+        test: "Test",
+        off: "Off",
+        needsSetup: "Enter the printer’s address and access code.",
+        idle: "Ready: connects when the page opens.",
+        connecting: "Connecting…",
+        live: "Connected to the printer.",
+        refused: "The printer refused the access code.",
+        unreachable: "The printer does not answer. Trying again…",
+        certificateChanged: "The printer shows another certificate than at the first connection. If it is yours (after an update or a reset), forget the old one.",
+        forgetCertificate: "Forget the certificate",
+        cameraUnavailable: "Camera unavailable",
+        layer: "Layer",
+        nozzle: "Nozzle",
+        bed: "Bed",
+        noJob: "No print",
+        openSettings: "Open Settings",
+        retry: "Try again",
+        left: { "\($0) left" }
+    )
+
+    static let french = ForkBambuStrings(
+        title: "Imprimante",
+        toggle: "Page Imprimante (Bambu Lab)",
+        toggleCaption: "Votre imprimante Bambu Lab en direct dans l’île, sans le cloud ni Home Assistant : caméra, progression, temps restant, couches, températures. Prévue pour l’A1 et la P1.",
+        search: "Rechercher l’imprimante",
+        searching: "Recherche sur le réseau…",
+        noneFound: "Aucune imprimante trouvée : vérifiez qu’elle est allumée et sur le même réseau, ou saisissez son adresse.",
+        choose: "Choisir",
+        address: "Adresse de l’imprimante",
+        addressCaption: "Son adresse IP sur votre réseau local (Réglages › Réseau sur l’écran de l’imprimante).",
+        invalidAddress: "Adresse locale uniquement, par exemple 192.168.1.40.",
+        serial: "Numéro de série",
+        serialCaption: "Trouvé tout seul ; sinon, sur l’écran de l’imprimante (Réglages › Appareil).",
+        code: "Code d’accès",
+        codeCaption: "Sur l’écran de l’imprimante : Réglages › Réseau (WLAN) › Code d’accès. Il reste dans le trousseau de ce Mac uniquement.",
+        forgetCode: "Oublier le code",
+        save: "Enregistrer",
+        connection: "Connexion",
+        test: "Tester",
+        off: "Désactivée",
+        needsSetup: "Indiquez l’adresse et le code d’accès de l’imprimante.",
+        idle: "Prête : se connecte à l’ouverture de la page.",
+        connecting: "Connexion…",
+        live: "Connectée à l’imprimante.",
+        refused: "L’imprimante a refusé le code d’accès.",
+        unreachable: "L’imprimante ne répond pas. Nouvel essai…",
+        certificateChanged: "L’imprimante présente un autre certificat qu’à la première connexion. Si c’est bien la vôtre (après une mise à jour ou une réinitialisation), oubliez l’ancien.",
+        forgetCertificate: "Oublier le certificat",
+        cameraUnavailable: "Caméra indisponible",
+        layer: "Couche",
+        nozzle: "Buse",
+        bed: "Plateau",
+        noJob: "Aucune impression",
+        openSettings: "Ouvrir les réglages",
+        retry: "Réessayer",
+        left: { "reste \($0)" }
     )
 }

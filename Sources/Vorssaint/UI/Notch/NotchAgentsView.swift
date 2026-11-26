@@ -9,6 +9,7 @@ struct NotchAgentsView: View {
     @ObservedObject private var usage = AgentUsageService.shared
     @ObservedObject private var accounts = CodexProfileLimitsService.shared
     @ObservedObject private var l10n = L10n.shared
+    @ObservedObject private var forkSessions = ForkClaudeSessions.shared  // Fork: the Waiting card comes and goes
     @Environment(\.notchSettingsPreview) private var preview
     @AppStorage(DefaultsKey.notchAgentsPeriod) private var period = AgentPeriod.today.rawValue
     @AppStorage(DefaultsKey.notchAgentsLimitDisplay) private var display = NotchAgentLimitDisplay.remaining.rawValue
@@ -18,6 +19,7 @@ struct NotchAgentsView: View {
     @AppStorage(DefaultsKey.notchAgentsCodex) private var codex = true
     @AppStorage(DefaultsKey.notchAgentsOpenCode) private var opencode = true
     @AppStorage(DefaultsKey.notchAgentsCopilot) private var copilot = true
+    @AppStorage(DefaultsKey.forkAgentsHublotStyle) private var forkStyle = true  // Fork: Hublot style
 
     private var text: NotchAgentStrings { FeatureStrings.notchAgents(l10n.language) }
     private var chosenPeriod: AgentPeriod { AgentPeriod(rawValue: period) ?? .today }
@@ -56,12 +58,15 @@ struct NotchAgentsView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if providers.isEmpty {
                 NotchEmptyView(symbol: "sparkles", message: text.empty)
-            } else if rows.isEmpty {
+            } else if rows.isEmpty && !forkStyle {  // Fork: Edit stays reachable
                 NotchEmptyView(symbol: "square.grid.2x2", message: text.noCards)
             } else {
                 let rows = rows
                 TimelineView(.periodic(from: .now, by: 15)) { context in
-                    if NotchAgentSupport.contentHeight(rows) > size.height + 0.5 {
+                    if forkStyle {  // Fork: Hublot style
+                        ForkAgentGrid(tiles: rows.flatMap { $0 }, size: size, now: context.date, period: chosenPeriod,
+                                      display: NotchAgentLimitDisplay(rawValue: display) ?? .remaining) { card($0, now: context.date) }  // Fork
+                    } else if NotchAgentSupport.contentHeight(rows) > size.height + 0.5 {
                         ScrollView { grid(rows, now: context.date) }
                             .scrollIndicators(.automatic)
                     } else {
@@ -135,6 +140,7 @@ struct NotchAgentsView: View {
             NotchAgentActivityCard(snapshot: snapshot, text: text)
         case .resets:
             NotchAgentResetsCard(now: now, text: text, showsDefaultAccount: tile.namesDefaultAccount)
+        case .forkWaiting, .forkTime, .forkResume: ForkAgentCard(card: tile.card, period: shown, snapshot: snapshot)  // Fork
         }
     }
 

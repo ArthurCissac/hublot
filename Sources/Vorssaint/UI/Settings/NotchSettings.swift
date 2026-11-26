@@ -329,12 +329,14 @@ struct NotchSettings: View {
                     let module = selectedModule
                     let available = module.isAvailable()
                     NotchSectionHeader(module: module, shown: isShown(module),
-                                       reason: available ? nil : moduleFeature(module).map { $0.enableReason(l10n) } ?? text.disabled) {
+                                       reason: available || module == .home || module == .printer ? nil : moduleFeature(module).map { $0.enableReason(l10n) } ?? text.disabled) {  // Fork: Home has its switch below
                         SettingsRouter.shared.request(FeatureSettingsDestination(.features), targetFeature: moduleFeature(module))
                     }
                     if !wide { preview(width: detailWidth, limit: 280) }
                     if available, hasOptions(module) {
                         SettingsCard { moduleOptions(module) }
+                    } else if module == .home || module == .printer {  // Fork: their switch and setup, with their page
+                        SettingsCard { if module == .home { ForkHomeSettingsSection() } else { ForkBambuSettingsSection() } }
                     } else if available {
                         Text(editor.noOptions).font(.callout).foregroundStyle(.secondary)
                     }
@@ -545,8 +547,10 @@ struct NotchSettings: View {
         case .watch:
             NotchWatchSettingsControls()
                 .toggleStyle(TrailingSwitchToggleStyle())
-        case .mixer, .system, .tools, .ambient, .tasks, .weather:  // Fork
+        case .mixer, .system, .tools, .ambient, .tasks, .weather, .translate:  // Fork
             EmptyView()
+        case .home: ForkHomeSettingsSection()  // Fork: Home Assistant, set up on its page
+        case .printer: ForkBambuSettingsSection()  // Fork: Bambu Lab, set up on its page
         }
     }
 
@@ -877,7 +881,7 @@ struct NotchSettings: View {
     private func moduleFeature(_ module: NotchModule) -> AppFeature? {
         switch module {
         case .controls, .music, .captures, .system: return nil
-        case .ambient, .tasks, .weather: return nil  // Fork: their own switches
+        case .ambient, .tasks, .weather, .translate, .home, .printer: return nil  // Fork: their own switches
         case .mixer: return .mixer
         case .clipboard: return .clipboardHistory
         case .files: return .shelf

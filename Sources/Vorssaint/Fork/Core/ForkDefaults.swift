@@ -58,12 +58,52 @@ extension DefaultsKey {
     static let forkChromeFullscreenSwipe = "forkChromeFullscreenSwipe"
     /// Battery alerts at several levels, with a banner and a sound (lot 8).
     static let forkBatteryAlerts = "forkBatteryAlerts"
-    /// The low battery alerts come with a coloured halo round the screens.
-    static let forkBatteryHalo = "forkBatteryHalo"
     /// A sound when the charger is plugged in or out.
     static let forkPowerSounds = "forkPowerSounds"
     /// The device whose battery the menu bar shows, by name; empty for the lowest.
     static let forkPinnedBatteryDevice = "forkPinnedBatteryDevice"
+    /// A battery item of its own in the menu bar, opening a panel like Juicy's.
+    static let forkBatteryStatusItem = "forkBatteryStatusItem"
+    /// How far the low battery halo reaches in: thin, medium or large.
+    static let forkBatteryHaloSize = "forkBatteryHaloSize"
+    /// The battery alerts, one by one, as JSON (`ForkBatteryAlertRules`); empty for Juicy's defaults.
+    static let forkBatteryAlertRules = "forkBatteryAlertRules"
+    /// The menu bar battery: the level inside, coloured by level, percent, time or both, large.
+    static let forkBatteryIconNumber = "forkBatteryIconNumber"
+    static let forkBatteryIconColors = "forkBatteryIconColors"
+    static let forkBatteryIconText = "forkBatteryIconText"
+    static let forkBatteryIconLarge = "forkBatteryIconLarge"
+    /// The devices pinned beside the battery, by name, in order (JSON); the single pin above is the first.
+    static let forkPinnedBatteryDevices = "forkPinnedBatteryDevices"
+    /// The battery panel's cards: their order, the folded ones, the chart's hours.
+    static let forkBatteryPanelOrder = "forkBatteryPanelOrder"
+    static let forkBatteryPanelCollapsed = "forkBatteryPanelCollapsed"
+    static let forkBatteryChartHours = "forkBatteryChartHours"
+    /// An alert when an app draws at least the threshold (watts) for minutes on battery.
+    static let forkAppEnergyAlerts = "forkAppEnergyAlerts"
+    static let forkAppEnergyThreshold = "forkAppEnergyThreshold"
+    /// The period the panel's energy card shows: live, day, week or month.
+    static let forkAppEnergyPeriod = "forkAppEnergyPeriod"
+    /// A global shortcut opens the battery panel (⌃⌥J unless changed; stored as GlobalShortcut text).
+    static let forkBatteryShortcutEnabled = "forkBatteryShortcutEnabled"
+    static let forkBatteryShortcut = "forkBatteryShortcut"
+    /// The island's battery activity was turned off once for the charger pills.
+    static let forkNotchBatteryMigrated = "forkNotchBatteryMigrated"  // not registered
+    /// The Hublot icon in the menu bar cut to its ink, without upstream's empty sides.
+    static let forkTightMenuBarIcon = "forkTightMenuBarIcon"
+    /// The size of the alert pills: extraSmall, small, standard or large.
+    static let forkBatteryPillSize = "forkBatteryPillSize"
+    /// A pill when the charger is plugged in or out, with its watts.
+    static let forkPowerAlertPill = "forkPowerAlertPill"
+    /// The charger's sounds: `none`, `hublot.<sound>`, `system.<macOS sound>` or `file.<imported>`.
+    static let forkPowerSoundPlugged = "forkPowerSoundPlugged"
+    static let forkPowerSoundUnplugged = "forkPowerSoundUnplugged"
+    /// The iPhones and iPads Hublot connects to, with their last level: this Mac's own.
+    static let forkBluetoothDeviceCache = "forkBluetoothDeviceCache"  // not registered
+    /// The old battery figure in the combined menu bar item was turned off once for the battery item.
+    static let forkBatteryStatusItemMigrated = "forkBatteryStatusItemMigrated"  // not registered
+    /// The Mac's battery level over the last 24 hours, for the panel's chart: this Mac's own.
+    static let forkBatteryHistory = "forkBatteryHistory"  // not registered
     /// The Cleaner page offers the disk map and the antivirus (lot 9).
     static let forkCleanerTools = "forkCleanerTools"
     /// The maintenance jobs checked, by name (lot 9d).
@@ -236,11 +276,39 @@ extension DefaultsKey {
     static let forkVolumeRoundSteps = "forkVolumeRoundSteps"
     /// While the island shows the brightness, the brightness keys move it in round steps of 5 %.
     static let forkBrightnessRoundSteps = "forkBrightnessRoundSteps"
-    /// The selected text, or the clipboard's, translated in a panel under the island.
+    /// The selected text, or the clipboard's, translated in the island's Translation page.
     static let forkTranslateEnabled = "forkTranslateEnabled"
     /// Control-Option-Command-T translates; the shortcut itself, when changed.
     static let forkTranslateShortcutEnabled = "forkTranslateShortcutEnabled"
     static let forkTranslateShortcut = "forkTranslateShortcut"  // not registered
+    /// The language translations go to: "auto" (French into English, the rest into French) or a code such as "es".
+    static let forkTranslateTarget = "forkTranslateTarget"
     /// The tool last shown in the Care window, to reopen it there.
     static let forkCareHubModule = "forkCareHubModule"  // not registered
+    /// A notice in the island when a Claude Code session waits for an answer.
+    static let forkAgentsWaitingAlert = "forkAgentsWaitingAlert"
+    /// The AI page in Hublot's style: a widget per kind of information, on a grid that never scrolls.
+    static let forkAgentsHublotStyle = "forkAgentsHublotStyle"
+    /// Explorer shows all its tiles at once, the island growing taller for them.
+    static let forkExplorerFitsAll = "forkExplorerFitsAll"
+    /// Pages left out of Explorer (still in the island), by name.
+    static let forkExplorerHidden = "forkExplorerHidden"
+    /// The island's Home page (Home Assistant), its server's address and a fallback one,
+    /// the favourite devices (entity ids, in order) and those also shown as menu tiles.
+    /// The access token is kept in the Keychain, never here.
+    static let forkHomeEnabled = "forkHomeEnabled"
+    static let forkHomeURL = "forkHomeURL"
+    static let forkHomeFallbackURL = "forkHomeFallbackURL"
+    static let forkHomeFavorites = "forkHomeFavorites"
+    static let forkHomeMenuTiles = "forkHomeMenuTiles"
+    /// The Home page shows a 3D printer tile while the Printer page is on.
+    static let forkHomeShowsPrinter = "forkHomeShowsPrinter"
+    /// The island's Printer page (a Bambu Lab printer on the local network): its address, serial
+    /// and name. The access code is kept in the Keychain, never here.
+    static let forkBambuEnabled = "forkBambuEnabled"
+    static let forkBambuHost = "forkBambuHost"
+    static let forkBambuSerial = "forkBambuSerial"
+    static let forkBambuName = "forkBambuName"
+    /// The printer's certificate fingerprints, remembered at the first connection.
+    static let forkBambuPins = "forkBambuPins"  // not registered
 }

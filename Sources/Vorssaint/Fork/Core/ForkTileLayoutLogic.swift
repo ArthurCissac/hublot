@@ -11,6 +11,8 @@ enum ForkTileLayoutLogic {
     /// A tile's name in the stored order.
     static func forkKey(_ raw: String) -> String { "fork." + raw }
     static func panelKey(_ raw: String) -> String { "panel." + raw }
+    /// A Home Assistant favourite's own tile, by entity id (ForkHome).
+    static func homeKey(_ raw: String) -> String { "home." + raw }
 
     /// The stored order: names separated by commas, each once.
     static func parse(_ stored: String?) -> [String] {

@@ -97,6 +97,9 @@ struct NotchEditorStrings {
         case .ambient: return ForkAmbientLogic.pageSummary(french: L10n.shared.language == .fr)  // Fork
         case .tasks: return ForkTodoistLogic.pageSummary(french: L10n.shared.language == .fr)  // Fork
         case .weather: return ForkWeatherLogic.pageSummary(french: L10n.shared.language == .fr)  // Fork
+        case .translate: return ForkTranslateLogic.pageSummary(french: L10n.shared.language == .fr)  // Fork
+        case .home: return ForkHomeLogic.pageSummary(french: L10n.shared.language == .fr)  // Fork
+        case .printer: return ForkBambuLogic.pageSummary(french: L10n.shared.language == .fr)  // Fork
         }
     }
 }

@@ -27,6 +27,7 @@ enum ForkBootstrap {
         ForkMissionControlPlus.shared.start()
         ForkChromeFullscreenSwipe.shared.start()
         ForkBatteryAlerts.shared.start()
+        ForkBatteryStatusItem.shared.start()
         ForkLidDisplaySleep.shared.start()
         ForkAmbientPlayer.shared.start()
         ForkCareAutomation.shared.start()
@@ -35,6 +36,9 @@ enum ForkBootstrap {
         ForkVercel.shared.start()
         ForkWeather.shared.start()
         ForkTranslate.shared.start()
+        ForkClaudeSessions.shared.start()
+        ForkHome.shared.start()
+        ForkBambu.shared.start()
     }
 }
 

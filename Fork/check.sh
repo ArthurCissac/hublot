@@ -142,6 +142,9 @@ fi
 #   - ForkDragTopGuardRow: the setting that keeps Mission Control away from a drag is gone;
 #   - ForkBatteryLogic.pinnedMetric, ForkBatterySettingsCard: the pinned device no longer
 #     shows in the menu bar, or lot 8's settings are gone;
+#   - ForkMenuBarIconTrim: the Hublot icon has its 6 pt of empty sides again;
+#   - ForkBatteryLogic.bluetoothRefreshInterval: a pinned iPhone or iPad is read every
+#     five minutes again instead of every two;
 #   - ForkCleanerToolsBar: the disk map and the antivirus can no longer be opened;
 #   - ForkTrackpadSwitcher (the AppSwitcher extension, the settings row): three fingers
 #     on the trackpad no longer open the window switcher;
@@ -153,6 +156,18 @@ fi
 #   - ForkRoundSteps (volume, two brightness lines), ForkRoundStepSettingsRows: the volume
 #     and brightness keys go back to the system's sixteenth steps, or their settings are gone;
 #   - ForkTranslateSettingsSection: the translation's settings are gone from the island's page;
+#   - the Translation page and button (NotchModule.translate, NotchControlItem.translate, their
+#     symbol, key, title, tile and action): the island no longer shows translations;
+#   - the Home page and button (NotchModule.home, NotchControlItem.home, their symbol, key, title,
+#     tile, action, preview, colour, height and ForkHomeSettingsSection): Home Assistant's favourites
+#     vanish from the island, its page scrolls, or its settings are gone;
+#   - the Printer page and button (NotchModule.printer, NotchControlItem.printer, the same set, and
+#     ForkBambuSettingsSection): the Bambu Lab printer vanishes from the island or cannot be set up;
+#   - the AI page's Claude cards (NotchAgentCard.forkWaiting/forkTime/forkResume, their symbol, title,
+#     period, view and order), the waiting notice's click and switch, the requests handed to the time per
+#     project: the cards vanish, a waiting notice opens the AI page, or the time stays empty;
+#   - the Hublot style (ForkAgentGrid, its height, the island growing for it) and Explorer on one page
+#     (every row, the picker, the pencil, hidden pages left out): the AI page scrolls again, or Explorer pages;
 #   - ForkTests: the fork's tests compile but never run.
 print
 print "Fork hooks in upstream sources"
@@ -236,6 +251,8 @@ for hook_site in \
     'ForkDragTopGuardRow()|Sources/Vorssaint/UI/Settings/ShelfSettings.swift' \
     'if let pinned = ForkBatteryLogic.pinnedMetric(devices: devices,|Sources/Vorssaint/Services/Metrics/PeripheralBatterySupport.swift' \
     'ForkBatterySettingsCard()  // Fork|Sources/Vorssaint/UI/Settings/MonitorSettings.swift' \
+    'button.image = ForkMenuBarIconTrim.trimmed(button.image)  // Fork|Sources/Vorssaint/App/StatusItemController.swift' \
+    'private var bluetoothCacheInterval: TimeInterval { ForkBatteryLogic.bluetoothRefreshInterval }|Sources/Vorssaint/Services/Metrics/PeripheralBatterySampler.swift' \
     'ForkCleanerToolsBar()  // Fork|Sources/Vorssaint/UI/Cleaner/CleanerView.swift' \
     'func forkBeginGestureSession(scope: SwitcherSessionScope, reversed: Bool)|Sources/Vorssaint/Services/Switcher/AppSwitcher.swift' \
     'ForkSwitcherGestureRow(switcherEnabled: switcherEnabled)|Sources/Vorssaint/UI/Settings/SwitcherSettings.swift' \
@@ -281,7 +298,8 @@ for hook_site in \
     'case .ambient: ForkAmbientIslandTile(service: service)  // Fork|Sources/Vorssaint/UI/Notch/NotchControlsView.swift' \
     'case .ambient: return ForkAmbientStrings.current.title  // Fork|Sources/Vorssaint/UI/Notch/NotchControlsView.swift' \
     'case .ambient: ForkAmbientPlayer.shared.toggle()  // Fork|Sources/Vorssaint/Services/Notch/NotchService.swift' \
-    '== [.panel, .ambient, .tasks],  // Fork|Tests/NotchTests.swift' \
+    '== [.panel, .ambient, .tasks, .translate, .home, .printer],  // Fork|Tests/NotchTests.swift' \
+    '(spacious.sectionRows(count: allModules.count) + 2) >= allModules.count,  // Fork|Tests/NotchTests.swift' \
     'wave (ForkAmbientStrip)|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
     'case .ambient: return ForkAmbientLogic.title(french: language == .fr)  // Fork|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
     'case .ambient: return .ambient  // Fork: its own page|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
@@ -375,11 +393,11 @@ for hook_site in \
     'case .tasks: ForkTodoistIslandPage(size: size)  // Fork|Sources/Vorssaint/UI/Settings/NotchContentEditor.swift' \
     'case .ambient: return .indigo  // Fork|Sources/Vorssaint/UI/Settings/NotchContentEditor.swift' \
     'case .tasks: return .red  // Fork|Sources/Vorssaint/UI/Settings/NotchContentEditor.swift' \
-    'case .mixer, .system, .tools, .ambient, .tasks, .weather:  // Fork|Sources/Vorssaint/UI/Settings/NotchSettings.swift' \
+    'case .mixer, .system, .tools, .ambient, .tasks, .weather, .translate:  // Fork|Sources/Vorssaint/UI/Settings/NotchSettings.swift' \
     'case .ambient: return ForkAmbientLogic.pageSummary(french: L10n.shared.language == .fr)  // Fork|Sources/Vorssaint/Core/NotchEditorStrings.swift' \
     'case .tasks: return ForkTodoistLogic.pageSummary(french: L10n.shared.language == .fr)  // Fork|Sources/Vorssaint/Core/NotchEditorStrings.swift' \
-    '.scratchpad, .watch, .ambient, .tasks, .weather:  // Fork|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
-    'case .ambient, .tasks, .weather: return nil  // Fork|Sources/Vorssaint/UI/Settings/NotchSettings.swift' \
+    '.scratchpad, .watch, .ambient, .tasks, .weather, .translate:  // Fork|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
+    'case .ambient, .tasks, .weather, .translate, .home, .printer: return nil  // Fork|Sources/Vorssaint/UI/Settings/NotchSettings.swift' \
     'private var forkVariant = "classic"  // Fork|Sources/Vorssaint/UI/Settings/NotchMascotSettings.swift' \
     'ForkMascotVariantPicker(look: look)  // Fork|Sources/Vorssaint/UI/Settings/NotchMascotSettings.swift' \
     'ForkMascotVariantLogic.variant(forkVariant).keepsShape {  // Fork|Sources/Vorssaint/UI/Settings/NotchMascotSettings.swift' \
@@ -388,6 +406,89 @@ for hook_site in \
     'BrightnessSupport.steppedBrightness(current, delta: delta)  // Fork: key step|Sources/Vorssaint/Services/Display/BrightnessService.swift' \
     'BrightnessSupport.steppedBrightness(current, delta: delta)  // Fork: system route|Sources/Vorssaint/Services/Display/BrightnessService.swift' \
     'ForkTranslateSettingsSection()  // Fork: translation of the selection|Sources/Vorssaint/UI/Settings/NotchSettings.swift' \
+    'case translate  // Fork: the Translation page|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
+    'case .translate: return ForkTranslateLogic.pageSymbol  // Fork: the Translation page|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
+    'case .translate: return ForkTranslateLogic.pageSymbol  // Fork: the Translate button|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
+    'case .translate: return "l"  // Fork|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
+    'case .translate: return ForkTranslateLogic.pageAvailable(in: defaults)  // Fork|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
+    'case translate  // Fork: translation (ForkTranslateLogic)|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
+    'case .translate: return .none  // Fork: translation|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
+    'case .translate: return ForkTranslateLogic.islandControlAvailable(in: defaults)  // Fork|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
+    'case .translate: ForkTranslateIslandPage(size: pageSize)  // Fork|Sources/Vorssaint/UI/Notch/NotchView.swift' \
+    'case .translate: return ForkTranslateLogic.title(french: language == .fr)  // Fork|Sources/Vorssaint/UI/Notch/NotchView.swift' \
+    'case .translate: ForkTranslateIslandPage(size: size)  // Fork|Sources/Vorssaint/UI/Settings/NotchContentEditor.swift' \
+    'case .translate: return .blue  // Fork|Sources/Vorssaint/UI/Settings/NotchContentEditor.swift' \
+    'case .translate: return ForkTranslateLogic.pageSummary(|Sources/Vorssaint/Core/NotchEditorStrings.swift' \
+    'case .translate: ForkTranslateIslandTile(service: service)  // Fork|Sources/Vorssaint/UI/Notch/NotchControlsView.swift' \
+    'case .translate: return ForkTranslateStrings.current.translate  // Fork|Sources/Vorssaint/UI/Notch/NotchControlsView.swift' \
+    'case .translate: ForkTranslate.shared.translateSelection()  // Fork|Sources/Vorssaint/Services/Notch/NotchService.swift' \
+    'case home  // Fork: the Home page|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
+    'case .home: return ForkHomeLogic.pageSymbol  // Fork: the Home page|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
+    'case .home: return "h"  // Fork|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
+    'case .home: return ForkHomeLogic.pageAvailable(in: defaults)  // Fork|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
+    'case home  // Fork: Home Assistant (ForkHomeLogic)|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
+    'case .home: return ForkHomeLogic.pageSymbol  // Fork: the Home button|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
+    'case .home: return .none  // Fork: Home Assistant|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
+    'case .home: return ForkHomeLogic.islandControlAvailable(in: defaults)  // Fork|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
+    'case .home:  // Fork: every favourite shown, never scrolled|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
+    'ForkHomeLogic.contentHeight(contentWidth) ?? budget)|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
+    'case .home: ForkHomeIslandPage(size: pageSize)  // Fork|Sources/Vorssaint/UI/Notch/NotchView.swift' \
+    'case .home: return ForkHomeLogic.title(french: language == .fr)  // Fork|Sources/Vorssaint/UI/Notch/NotchView.swift' \
+    'case .home: ForkHomeIslandPage(size: size)  // Fork|Sources/Vorssaint/UI/Settings/NotchContentEditor.swift' \
+    'case .home: return .teal  // Fork|Sources/Vorssaint/UI/Settings/NotchContentEditor.swift' \
+    'case .home: return ForkHomeLogic.pageSummary(|Sources/Vorssaint/Core/NotchEditorStrings.swift' \
+    'case .home: ForkHomeIslandTile(service: service)  // Fork|Sources/Vorssaint/UI/Notch/NotchControlsView.swift' \
+    'case .home: return ForkHomeStrings.current.title  // Fork|Sources/Vorssaint/UI/Notch/NotchControlsView.swift' \
+    'case .home: select(.home)  // Fork|Sources/Vorssaint/Services/Notch/NotchService.swift' \
+    'case printer  // Fork: the Printer page|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
+    'case .printer: return ForkBambuLogic.pageSymbol  // Fork: the Printer page|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
+    'case .printer: return "j"  // Fork|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
+    'case .printer: return ForkBambuLogic.pageAvailable(in: defaults)  // Fork|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
+    'case printer  // Fork: Bambu Lab (ForkBambuLogic)|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
+    'case .printer: return ForkBambuLogic.pageSymbol  // Fork: the Printer button|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
+    'case .printer: return .none  // Fork: Bambu Lab|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
+    'case .printer: return ForkBambuLogic.islandControlAvailable(in: defaults)  // Fork|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
+    'case .printer:  // Fork: the camera and the print, never scrolled|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
+    'ForkBambuLogic.contentHeight(contentWidth) ?? budget)|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
+    'case .printer: ForkBambuIslandPage(size: pageSize)  // Fork|Sources/Vorssaint/UI/Notch/NotchView.swift' \
+    'case .printer: return ForkBambuLogic.title(french: language == .fr)  // Fork|Sources/Vorssaint/UI/Notch/NotchView.swift' \
+    'case .printer: ForkBambuIslandPage(size: size)  // Fork|Sources/Vorssaint/UI/Settings/NotchContentEditor.swift' \
+    'case .printer: return .green  // Fork|Sources/Vorssaint/UI/Settings/NotchContentEditor.swift' \
+    'case .printer: return ForkBambuLogic.pageSummary(|Sources/Vorssaint/Core/NotchEditorStrings.swift' \
+    'case .printer: ForkBambuIslandTile(service: service)  // Fork|Sources/Vorssaint/UI/Notch/NotchControlsView.swift' \
+    'case .printer: return ForkBambuStrings.current.title  // Fork|Sources/Vorssaint/UI/Notch/NotchControlsView.swift' \
+    'case .printer: select(.printer)  // Fork|Sources/Vorssaint/Services/Notch/NotchService.swift' \
+    'case .printer: ForkBambuSettingsSection()  // Fork|Sources/Vorssaint/UI/Settings/NotchSettings.swift' \
+    '.init(ForkBambuLogic.searchTerms(french: language == .fr), notch: .module(.printer)),  // Fork|Sources/Vorssaint/UI/Settings/SettingsDirectory.swift' \
+    'case .home: ForkHomeSettingsSection()  // Fork|Sources/Vorssaint/UI/Settings/NotchSettings.swift' \
+    'reason: available || module == .home || module == .printer ? nil :|Sources/Vorssaint/UI/Settings/NotchSettings.swift' \
+    '} else if module == .home || module == .printer {  // Fork|Sources/Vorssaint/UI/Settings/NotchSettings.swift' \
+    '.init(ForkHomeLogic.searchTerms(french: language == .fr), notch: .module(.home)),  // Fork|Sources/Vorssaint/UI/Settings/SettingsDirectory.swift' \
+    'case forkWaiting, forkTime, forkResume  // Fork|Sources/Vorssaint/Services/Notch/NotchAgentSupport.swift' \
+    'case .forkWaiting, .forkTime, .forkResume: return ForkAgentCardsLogic.symbol(self)  // Fork|Sources/Vorssaint/Services/Notch/NotchAgentSupport.swift' \
+    'var followsPeriod: Bool { self == .spend || self == .trend || self == .models || self == .projects || self == .forkTime }  // Fork|Sources/Vorssaint/Services/Notch/NotchAgentSupport.swift' \
+    'return ForkAgentCardsLogic.arranged(orderedCards(in: defaults).filter|Sources/Vorssaint/Services/Notch/NotchAgentSupport.swift' \
+    'case .forkWaiting, .forkTime, .forkResume: return ForkAgentCardsLogic.title(card|Sources/Vorssaint/Core/NotchAgentStrings.swift' \
+    '@ObservedObject private var forkSessions = ForkClaudeSessions.shared  // Fork|Sources/Vorssaint/UI/Notch/NotchAgentsView.swift' \
+    'case .forkWaiting, .forkTime, .forkResume: ForkAgentCard(card: tile.card, period: shown, snapshot: snapshot)  // Fork|Sources/Vorssaint/UI/Notch/NotchAgentsView.swift' \
+    'ForkAgentWaitingAlertRow()  // Fork|Sources/Vorssaint/UI/Settings/NotchAgentsSettings.swift' \
+    'ForkClaudeSessionsLogic.takeRecords(store.records, next.now)  // Fork|Sources/Vorssaint/Services/AgentUsage/AgentUsageService.swift' \
+    'if ForkClaudeSessionsLogic.isNotice(symbol: selectedNotice.symbol) { ForkClaudeSessionsLogic.goToWaiting()|Sources/Vorssaint/Services/Notch/NotchService.swift' \
+    '.resets, .forkTime, .forkResume],  // Fork|Tests/NotchAgentTests.swift' \
+    '.projects, .forkTime],  // Fork|Tests/NotchAgentTests.swift' \
+    '@AppStorage(DefaultsKey.forkAgentsHublotStyle) private var forkStyle = true  // Fork|Sources/Vorssaint/UI/Notch/NotchAgentsView.swift' \
+    '} else if rows.isEmpty && !forkStyle {  // Fork|Sources/Vorssaint/UI/Notch/NotchAgentsView.swift' \
+    'if forkStyle {  // Fork: Hublot style|Sources/Vorssaint/UI/Notch/NotchAgentsView.swift' \
+    'ForkAgentGrid(tiles: rows.flatMap { $0 }, size: size, now: context.date, period: chosenPeriod,|Sources/Vorssaint/UI/Notch/NotchAgentsView.swift' \
+    'if ForkAgentLayoutLogic.styleEnabled() {  // Fork: the Hublot style|Sources/Vorssaint/Services/Notch/NotchService.swift' \
+    'NotchSupport.filteredModules(ForkAgentLayoutLogic.explorerShown(modules,|Sources/Vorssaint/Services/Notch/NotchService.swift' \
+    'contentHeight = min(ForkAgentLayoutLogic.styleEnabled() ? max(budget, screen.height|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
+    'ForkAgentLayoutLogic.explorerRows(count: count, columns: sectionColumns, presetRows:  // Fork|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
+    'let content = min(max(pageBudget, ForkAgentLayoutLogic.explorerFitsAll()|Sources/Vorssaint/Services/Notch/NotchSupport.swift' \
+    '@ObservedObject private var forkEditing = ForkAgentEditing.shared  // Fork|Sources/Vorssaint/UI/Notch/NotchSectionsView.swift' \
+    'ForkExplorerPicker(modules: service.modules)|Sources/Vorssaint/UI/Notch/NotchSectionsView.swift' \
+    '.overlay(alignment: .bottomTrailing) { ForkExplorerEditButton() }  // Fork|Sources/Vorssaint/UI/Notch/NotchSectionsView.swift' \
+    'ForkAgentStyleRows()  // Fork|Sources/Vorssaint/UI/Settings/NotchAgentsSettings.swift' \
     'ForkTests.run(suite)|Tests/MetricsTests.swift'; do
     hook="${hook_site%%|*}"
     site="${hook_site##*|}"
@@ -465,6 +566,17 @@ if (( ${#staged_bundles} )); then
 else
     print "  - no staged bundle: prompt not checked"
 fi
+# Home Assistant (ForkHome) is reached on the local network: without the
+# prompt's text macOS 15 shows a bare request, and without
+# NSAllowsLocalNetworking plain http to homeassistant.local is refused.
+for staged in $staged_bundles; do
+    if [[ "$(count '<key>NSLocalNetworkUsageDescription</key>' "$staged/Contents/Info.plist")" == 1 \
+          && "$(count '<key>NSAllowsLocalNetworking</key>' "$staged/Contents/Info.plist")" == 1 ]]; then
+        ok "${staged:t}: local network prompt and local http in place"
+    else
+        fail "${staged:t} lacks the local network keys: rebuild, then check BUNDLE_ADDITIONS in Fork/brand.py"
+    fi
+done
 
 # --- 3. The fan helper trusts the fork's team, not upstream's ------------------
 # Upstream hardcodes its Apple team in the XPC code requirement of the fan

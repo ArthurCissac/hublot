@@ -29,7 +29,7 @@ final class PeripheralBatterySampler {
     // The reader itself belongs only to bluetoothQueue.
     private var bluetoothBatteryRead: (request: BoundedProcessCancellation, reader: PeripheralBluetoothReading)?
     private let fastCacheInterval: TimeInterval = 15
-    private let bluetoothCacheInterval: TimeInterval = 300
+    private var bluetoothCacheInterval: TimeInterval { ForkBatteryLogic.bluetoothRefreshInterval }  // Fork: lot 8, 300 s upstream
     /// Called on the Bluetooth queue after a refresh stores new devices, so
     /// the owner can read them now instead of at its next sampling stride.
     /// Set once before sampling starts.

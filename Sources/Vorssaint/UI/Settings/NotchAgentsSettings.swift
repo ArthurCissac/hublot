@@ -54,6 +54,7 @@ struct NotchAgentsSettingsControls: View {
             if codex { CodexAccountsSettings() }
 
             Divider()
+            ForkAgentStyleRows()  // Fork: Hublot style, Explorer on one page
             Text(text.cardsTitle).font(.subheadline.weight(.medium))
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 104), spacing: 8)], spacing: 8) {
                 ForEach(orderedCards) { card in
@@ -116,6 +117,7 @@ struct NotchAgentsSettingsControls: View {
                 }
                 .padding(.leading, settingsRowTextInset)
             }
+            ForkAgentWaitingAlertRow()  // Fork: a Claude session waiting
             switchRow("exclamationmark.triangle", text.limitAlert, isOn: $limitAlert)
             if limitAlert {
                 SettingsMenuRow(symbol: "gauge.with.dots.needle.67percent", title: text.limitAt, selection: $limitThreshold) {

@@ -415,6 +415,7 @@ final class StatusItemController {
         } else {
             button.image = stateImage
         }
+        button.image = ForkMenuBarIconTrim.trimmed(button.image)  // Fork: no empty sides round the porthole
     }
 
     @objc private func clicked() {

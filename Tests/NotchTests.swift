@@ -2269,7 +2269,7 @@ enum NotchTests {
         suite.expect(!NotchSupport.modules(in: defaults).contains(.mixer)
                && !NotchSupport.controls(in: defaults).contains(.volume), "mixer availability gates its module and volume control")
         defaults.set(true, forKey: AppFeature.mixer.availabilityKey)
-        suite.expect(NotchControlItem.allCases.filter { $0.setupRequirement == .none } == [.panel, .ambient, .tasks],  // Fork: background sound and Todoist need no setup
+        suite.expect(NotchControlItem.allCases.filter { $0.setupRequirement == .none } == [.panel, .ambient, .tasks, .translate, .home, .printer],  // Fork: background sound, Todoist, translation, Home and Printer need no setup
                      "every unavailable island control with a setup path has a navigation target")
         suite.expect(NotchControlItem.allCases.filter(\.isLevel) == [.volume, .brightness, .keyboardLight]
                      && !NotchQuickAction.optionalActions.contains(.control(.keyboardLight)),
@@ -2747,7 +2747,7 @@ enum NotchTests {
                "the gallery is a page: presets show three whole rows and a tall island shows more")
         suite.expect(compact.sectionColumns == 4 && spacious.sectionColumns == 5
                && compact.sectionColumns * compact.sectionRows(count: allModules.count) < allModules.count
-               && spacious.sectionColumns * (spacious.sectionRows(count: allModules.count) + 1) >= allModules.count,
+               && spacious.sectionColumns * (spacious.sectionRows(count: allModules.count) + 2) >= allModules.count,  // Fork: 22 pages with the fork's six, two steps
                "a compact island steps rows to reach its last sections and a spacious one steps at most one")
         suite.expect(NotchLayout.sectionTileHeight * 2 + NotchLayout.sectionSpacing <= NotchLayout.compactContentHeight
                && NotchLayout.sectionTileHeight * 3 + NotchLayout.sectionSpacing * 2 <= NotchLayout.pageContentHeight,

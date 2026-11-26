@@ -13,7 +13,7 @@ import Foundation
 enum ForkQuickActionLogic {
     enum Action: String, CaseIterable {
         case tasks, colorPicker, screenText, phoneSite, ambient, note, clipboard, presentation, camera, soundOutput, smartScan
-        case recordScreen, weather
+        case recordScreen, weather, translate, home, printer
     }
 
     // MARK: - Which tiles show

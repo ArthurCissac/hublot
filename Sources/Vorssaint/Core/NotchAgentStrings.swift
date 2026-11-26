@@ -144,6 +144,7 @@ struct NotchAgentStrings {
         case .projects: return projectsCard
         case .activity: return activityCard
         case .resets: return resetsCard
+        case .forkWaiting, .forkTime, .forkResume: return ForkAgentCardsLogic.title(card, french: L10n.shared.language == .fr)  // Fork
         }
     }
 

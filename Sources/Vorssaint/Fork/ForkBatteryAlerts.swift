@@ -2,30 +2,47 @@
 // Copyright (C) 2026 Arthur Cissac
 
 import AppKit
+import Combine
 import IOKit.ps
 import os
 
-/// Lot 8 (see `ForkBatteryLogic`): the Mac's battery is read whenever macOS
-/// says its power sources changed. Reaching an alert level shows a banner,
-/// a coloured halo round the screens for the low levels, and plays a sound;
-/// the charger coming or going plays its own sound. Nothing runs while both
-/// settings are off, or on a Mac without a battery. Main thread only.
+/// Lot 8, Juicy's alerts (rules in `ForkBatteryAlertRules`). The Mac's
+/// battery is read whenever macOS says its power sources changed: a rule
+/// crossed shows its pill, plays its sound and, when set, lights a halo round
+/// the screen the pointer is on. The charger coming shows a pill with its
+/// watts (amber when too slow), going shows one with the time left. The devices' levels, read while the
+/// battery item shows, have rules of their own. Nothing runs while the
+/// alerts and the charger sounds are off, or on a Mac without a battery.
+/// Main thread only.
 final class ForkBatteryAlerts {
     static let shared = ForkBatteryAlerts()
     typealias Logic = ForkBatteryLogic
+    typealias Panel = ForkBatteryPanelLogic
+    typealias Rules = ForkBatteryAlertRules
 
     private var source: CFRunLoopSource?
     private var observers: [NSObjectProtocol] = []
+    private var deviceWatch: AnyCancellable?
     private lazy var resync = ForkCoalescedMainAction { [weak self] in self?.sync() }
     private var last: Logic.Reading?
+    private var deviceLevels: [String: Int] = [:]
+    private var chargerPending: DispatchWorkItem?
+    /// Plugged in or not, as last announced: a flicker back to it says nothing.
+    private var lastChargerAnnounced: Bool?
     private var halos: [NSWindow] = []
-    private var sound: NSSound?
     /// What happened, for `log show --predicate 'category == "battery"'`.
     private let log = Logger(subsystem: Bundle.main.bundleIdentifier ?? "Hublot", category: "battery")
 
     private init() {}
 
     func start() {
+        // The island's own « Plugged in / On battery » doubles the charger
+        // pills: turned off once, it can be turned back on in its settings.
+        let defaults = UserDefaults.standard
+        if defaults.bool(forKey: DefaultsKey.forkPowerAlertPill), !defaults.bool(forKey: DefaultsKey.forkNotchBatteryMigrated) {
+            defaults.set(true, forKey: DefaultsKey.forkNotchBatteryMigrated)
+            defaults.set(false, forKey: DefaultsKey.notchBattery)
+        }
         resync.schedule()
         observers.append(NotificationCenter.default.addObserver(forName: UserDefaults.didChangeNotification,
                                                                 object: nil, queue: .main) { [weak self] _ in
@@ -34,100 +51,213 @@ final class ForkBatteryAlerts {
         })
     }
 
+    private var defaults: UserDefaults { .standard }
+
+    private var rules: [Rules.Rule] {
+        Rules.decode(defaults.string(forKey: DefaultsKey.forkBatteryAlertRules) ?? "")
+    }
+
     private var wanted: Bool {
-        let defaults = UserDefaults.standard
-        return (defaults.bool(forKey: DefaultsKey.forkBatteryAlerts) || defaults.bool(forKey: DefaultsKey.forkPowerSounds))
+        (defaults.bool(forKey: DefaultsKey.forkBatteryAlerts) || defaults.bool(forKey: DefaultsKey.forkPowerSounds)
+            || defaults.bool(forKey: DefaultsKey.forkPowerAlertPill))
             && AppFeature.monitorPower.isAvailable && PowerSampler.hasInternalBattery
     }
 
     private func sync() {
         if wanted {
-            guard source == nil else { return }
-            let context = Unmanaged.passUnretained(self).toOpaque()
-            guard let created = IOPSNotificationCreateRunLoopSource({ context in
-                guard let context else { return }
-                Unmanaged<ForkBatteryAlerts>.fromOpaque(context).takeUnretainedValue().powerChanged()
-            }, context)?.takeRetainedValue() else { return }
-            CFRunLoopAddSource(CFRunLoopGetMain(), created, .defaultMode)
-            source = created
-            last = Self.reading()
+            if source == nil {
+                let context = Unmanaged.passUnretained(self).toOpaque()
+                if let created = IOPSNotificationCreateRunLoopSource({ context in
+                    guard let context else { return }
+                    Unmanaged<ForkBatteryAlerts>.fromOpaque(context).takeUnretainedValue().powerChanged()
+                }, context)?.takeRetainedValue() {
+                    CFRunLoopAddSource(CFRunLoopGetMain(), created, .defaultMode)
+                    source = created
+                    last = Self.reading()
+                    lastChargerAnnounced = last?.onPower
+                }
+            }
         } else if let source {
             CFRunLoopRemoveSource(CFRunLoopGetMain(), source, .defaultMode)
             self.source = nil
             last = nil
+            chargerPending?.cancel()
+            lastChargerAnnounced = nil
+        }
+        // The devices: only while the alerts are on (their levels are read
+        // while the battery item shows).
+        let watchDevices = defaults.bool(forKey: DefaultsKey.forkBatteryAlerts) && AppFeature.monitorPower.isAvailable
+        if watchDevices, deviceWatch == nil {
+            deviceWatch = ForkBatteryStatusItem.shared.model.$devices.sink { [weak self] devices in
+                DispatchQueue.main.async { self?.devicesChanged(devices) }
+            }
+        } else if !watchDevices, deviceWatch != nil {
+            deviceWatch = nil
+            deviceLevels = [:]
         }
     }
+
+    // MARK: - The Mac
 
     private func powerChanged() {
-        guard let current = Self.reading() else { return }
+        guard let mac = ForkBatteryPanelModel.readMac() else { return }
+        let current = Logic.Reading(percent: mac.percent, onPower: mac.onPower, charging: mac.charging)
         let previous = last
         last = current
-        let defaults = UserDefaults.standard
-        if defaults.bool(forKey: DefaultsKey.forkPowerSounds), let change = Logic.powerChange(from: previous, to: current) {
-            play(change == .plugged ? .plugged : .unplugged)
-        }
-        if defaults.bool(forKey: DefaultsKey.forkBatteryAlerts), let alert = Logic.alert(from: previous, to: current) {
-            show(alert)
+        if Logic.powerChange(from: previous, to: current) != nil { scheduleCharger() }
+        if defaults.bool(forKey: DefaultsKey.forkBatteryAlerts), let rule = Rules.macRule(from: previous, to: current, rules: rules) {
+            show(Rules.pill(for: rule, percent: mac.percent, minutesLeft: mac.minutesToEmpty, minutesToFull: mac.minutesToFull))
+            log.notice("alert at \(mac.percent)%")
         }
     }
 
-    /// The internal battery's level and whether the charger is in.
+    /// The charger is announced once it has settled (`Rules.chargerSettle`).
+    private func scheduleCharger() {
+        chargerPending?.cancel()
+        let work = DispatchWorkItem { [weak self] in self?.announceCharger() }
+        chargerPending = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + Rules.chargerSettle, execute: work)
+    }
+
+    private func announceCharger() {
+        guard let mac = ForkBatteryPanelModel.readMac(),
+              let change = Rules.chargerAnnouncement(lastAnnounced: lastChargerAnnounced, onPower: mac.onPower) else { return }
+        lastChargerAnnounced = mac.onPower
+        chargerChanged(change, mac: mac)
+    }
+
+    /// The charger's watts once it has agreed on its power, in the pill
+    /// still showing.
+    private func refreshChargerWatts(shown: Int?) {
+        guard lastChargerAnnounced == true, let mac = ForkBatteryPanelModel.readMac(), mac.onPower else { return }
+        let watts = ForkBatteryPanelModel.readBattery().adapterWatts
+        guard watts != shown else { return }
+        ForkBatteryPillPresenter.shared.refresh(Rules.pluggedPill(percent: mac.percent, watts: watts,
+                                                                  minutesToFull: mac.minutesToFull, sound: nil))
+    }
+
+    private func chargerChanged(_ change: Logic.PowerChange, mac: ForkBatteryPanelModel.MacBattery) {
+        let event = Panel.soundEvent(for: change)
+        let sound: String? = defaults.bool(forKey: DefaultsKey.forkPowerSounds)
+            ? ForkBatterySounds.shared.choice(defaults.string(forKey: event.defaultsKey), fallback: event.defaultChoice).stored
+            : nil
+        guard defaults.bool(forKey: DefaultsKey.forkPowerAlertPill) else {
+            if let sound { play(sound) }
+            return
+        }
+        switch change {
+        case .plugged:
+            let watts = ForkBatteryPanelModel.readBattery().adapterWatts
+            let pill = Rules.pluggedPill(percent: mac.percent, watts: watts, minutesToFull: mac.minutesToFull, sound: sound, settled: false)
+            show(pill)
+            let shown: Int? = { if case let .plugged(_, shownWatts, _, _) = pill.message { return shownWatts } else { return nil } }()
+            DispatchQueue.main.asyncAfter(deadline: .now() + Rules.wattsSettle) { [weak self] in
+                self?.refreshChargerWatts(shown: shown)
+            }
+        case .unplugged:
+            show(Rules.unpluggedPill(percent: mac.percent, minutesLeft: mac.minutesToEmpty, sound: sound))
+        }
+    }
+
+    /// The internal battery's level, the charger, whether it charges.
     private static func reading() -> Logic.Reading? {
-        guard let info = IOPSCopyPowerSourcesInfo()?.takeRetainedValue(),
-              let list = IOPSCopyPowerSourcesList(info)?.takeRetainedValue() as? [CFTypeRef] else { return nil }
-        for source in list {
-            guard let description = IOPSGetPowerSourceDescription(info, source)?.takeUnretainedValue() as? [String: Any],
-                  description[kIOPSTypeKey] as? String == kIOPSInternalBatteryType,
-                  let current = description[kIOPSCurrentCapacityKey] as? Int,
-                  let maximum = description[kIOPSMaxCapacityKey] as? Int, maximum > 0 else { continue }
-            let onPower = description[kIOPSPowerSourceStateKey] as? String == kIOPSACPowerValue
-            return Logic.Reading(percent: Int((Double(current) / Double(maximum) * 100).rounded()), onPower: onPower)
-        }
-        return nil
+        ForkBatteryPanelModel.readMac().map { Logic.Reading(percent: $0.percent, onPower: $0.onPower, charging: $0.charging) }
     }
 
-    // MARK: - Showing an alert
+    // MARK: - The devices
 
-    private func show(_ alert: Logic.Alert) {
-        let text = ForkBatteryStrings.current
-        let message = alert.kind == .charged ? text.charged(alert.percent) : text.low(alert.percent)
-        let symbol = alert.kind == .charged ? "battery.100.bolt" : alert.percent <= 5 ? "battery.0" : "battery.25"
-        QuickToolHUD.show(icon: symbol, message: message, swatch: Self.color(alert.color))
-        if alert.halo, UserDefaults.standard.bool(forKey: DefaultsKey.forkBatteryHalo) { showHalo(Self.color(alert.color)) }
-        play(alert.sound)
-        log.notice("alert at \(alert.percent)%")
-    }
-
-    private static func color(_ color: Logic.AlertColor) -> NSColor {
-        switch color {
-        case .orange: return .systemOrange
-        case .yellow: return .systemYellow
-        case .red: return .systemRed
-        case .green: return .systemGreen
+    private func devicesChanged(_ devices: [Panel.Device]) {
+        let active = rules
+        for device in devices {
+            guard device.isNearby, let percent = device.percent else { continue }
+            let previous = deviceLevels[device.id]
+            deviceLevels[device.id] = percent
+            guard let rule = Rules.deviceRule(from: previous, to: percent, rules: active) else { continue }
+            show(Rules.devicePill(for: rule, name: device.name, symbol: device.kind.symbol, percent: percent))
+            log.notice("device alert at \(percent)%")
         }
     }
 
-    /// A glow round the edge of every screen, pulsing twice, taking no clicks.
-    private func showHalo(_ color: NSColor) {
+    // MARK: - Showing
+
+    /// Tries an alert from the settings: its pill, halo and sound, at a level
+    /// a little past its threshold.
+    func preview(_ rule: Rules.Rule) {
+        let percent = rule.target == .device || rule.kind == .charged ? rule.percent : max(1, rule.percent)
+        if rule.target == .device {
+            show(Rules.devicePill(for: rule, name: ForkBatteryStrings.current.previewDevice, symbol: "iphone", percent: percent))
+        } else {
+            let mac = ForkBatteryPanelModel.readMac()
+            show(Rules.pill(for: rule, percent: percent, minutesLeft: mac?.minutesToEmpty, minutesToFull: mac?.minutesToFull))
+        }
+    }
+
+    /// Tries the charger's pill and sound from the settings.
+    func preview(_ change: Logic.PowerChange) {
+        let event = Panel.soundEvent(for: change)
+        let sound = ForkBatterySounds.shared.choice(defaults.string(forKey: event.defaultsKey), fallback: event.defaultChoice).stored
+        let mac = ForkBatteryPanelModel.readMac()
+        let percent = mac?.percent ?? 80
+        switch change {
+        case .plugged:
+            let battery = ForkBatteryPanelModel.readBattery()
+            show(Rules.pluggedPill(percent: percent, watts: battery.adapterWatts ?? 70, minutesToFull: mac?.minutesToFull, sound: sound))
+        case .unplugged:
+            show(Rules.unpluggedPill(percent: percent, minutesLeft: mac?.minutesToEmpty, sound: sound))
+        }
+    }
+
+    /// An app drawing a lot on battery (`ForkAppEnergy`).
+    func showAppDrift(name: String, watts: Double) {
+        show(Rules.appDriftPill(name: name, watts: watts))
+        log.notice("app drawing \(Int(watts.rounded())) W")
+    }
+
+    private func show(_ pill: Rules.Pill) {
+        let screen = Self.activeScreen
+        ForkBatteryPillPresenter.shared.show(pill, on: screen)
+        if pill.glow { showHalo(ForkBatteryTintPalette.nsColor(pill.tint), on: screen) }
+        if let sound = pill.sound { play(sound) }
+    }
+
+    private func play(_ stored: String) {
+        let sounds = ForkBatterySounds.shared
+        sounds.play(sounds.choice(stored, fallback: .none))
+    }
+
+    /// The screen the pointer is on: the alert and its halo stay there.
+    private static var activeScreen: NSScreen {
+        let pointer = NSEvent.mouseLocation
+        return NSScreen.screens.first { NSMouseInRect(pointer, $0.frame, false) } ?? NSScreen.main ?? NSScreen.screens[0]
+    }
+
+    // MARK: - The halo
+
+    /// The halo's reach, as set in the settings: large by default, like Juicy's.
+    private static var haloSize: Panel.HaloSize {
+        Panel.HaloSize(rawValue: UserDefaults.standard.string(forKey: DefaultsKey.forkBatteryHaloSize) ?? "") ?? .large
+    }
+
+    /// A glow round the edge of the screen, pulsing, taking no clicks.
+    private func showHalo(_ color: NSColor, on screen: NSScreen) {
         halos.forEach { $0.orderOut(nil) }
-        halos = NSScreen.screens.map { screen in
-            let window = NSWindow(contentRect: screen.frame, styleMask: .borderless, backing: .buffered, defer: false)
-            window.level = NSWindow.Level(rawValue: Int(CGShieldingWindowLevel()))
-            window.isOpaque = false
-            window.backgroundColor = .clear
-            window.ignoresMouseEvents = true
-            window.hasShadow = false
-            window.isReleasedWhenClosed = false
-            window.animationBehavior = .none
-            window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary, .ignoresCycle]
-            window.contentView = HaloView(color: color)
-            window.alphaValue = 0
-            window.orderFrontRegardless()
-            return window
-        }
+        let window = NSWindow(contentRect: screen.frame, styleMask: .borderless, backing: .buffered, defer: false)
+        window.level = NSWindow.Level(rawValue: Int(CGShieldingWindowLevel()))
+        window.isOpaque = false
+        window.backgroundColor = .clear
+        window.ignoresMouseEvents = true
+        window.hasShadow = false
+        window.isReleasedWhenClosed = false
+        window.animationBehavior = .none
+        window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary, .ignoresCycle]
+        window.contentView = HaloView(color: color, bands: Panel.haloBands(width: Self.haloSize.width))
+        window.alphaValue = 0
+        window.setFrame(screen.frame, display: false)
+        window.orderFrontRegardless()
+        halos = [window]
         let shown = halos
-        // Two pulses, then gone.
-        let steps: [(CGFloat, TimeInterval)] = [(1, 0.35), (0.35, 0.35), (1, 0.35), (0, 0.7)]
+        // Three slow pulses, then gone.
+        let steps: [(CGFloat, TimeInterval)] = [(1, 0.4), (0.45, 0.5), (1, 0.4), (0.45, 0.5), (1, 0.4), (0, 0.9)]
         func run(_ index: Int) {
             guard index < steps.count else {
                 shown.forEach { $0.orderOut(nil) }
@@ -143,9 +273,11 @@ final class ForkBatteryAlerts {
 
     private final class HaloView: NSView {
         let color: NSColor
+        let bands: [Panel.Band]
 
-        init(color: NSColor) {
+        init(color: NSColor, bands: [Panel.Band]) {
             self.color = color
+            self.bands = bands
             super.init(frame: .zero)
         }
 
@@ -153,24 +285,14 @@ final class ForkBatteryAlerts {
         required init?(coder: NSCoder) { nil }
 
         override func draw(_ dirtyRect: NSRect) {
-            // Layered strokes, strong at the edge and fading inward.
-            for step in 0..<14 {
-                let inset = CGFloat(step) * 3 + 1.5
-                color.withAlphaComponent(0.55 * pow(0.78, CGFloat(step))).setStroke()
-                let path = NSBezierPath(rect: bounds.insetBy(dx: inset, dy: inset))
-                path.lineWidth = 3
+            // Strokes from the edge inward, strong at the edge and fading to
+            // nothing (ForkBatteryPanelLogic.haloBands).
+            for band in bands {
+                color.withAlphaComponent(band.alpha).setStroke()
+                let path = NSBezierPath(rect: bounds.insetBy(dx: band.inset, dy: band.inset))
+                path.lineWidth = band.lineWidth
                 path.stroke()
             }
         }
-    }
-
-    // MARK: - Sounds
-
-    private func play(_ sound: Logic.Sound) {
-        let rate = 44_100
-        let samples = Logic.samples(for: Logic.tones(for: sound), sampleRate: Double(rate))
-        self.sound?.stop()
-        self.sound = NSSound(data: Logic.wavData(samples, sampleRate: rate))
-        self.sound?.play()
     }
 }
