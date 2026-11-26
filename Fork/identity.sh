@@ -17,7 +17,7 @@ FORK_SOURCE_URL="https://github.com/ArthurCissac/hublot"
 # Hublot's own version, shown in the app and compared with the tags of the
 # releases on FORK_SOURCE_URL (v0.2.0, v0.3.0-beta.1…). Raise it for every
 # release, with its section in Fork/CHANGELOG.md.
-FORK_VERSION="0.3.0"
+FORK_VERSION="0.4.0"
 
 # The Apple team of the Developer ID certificate the fork is signed with. The
 # app and its privileged fan helper only talk to each other when both ends are

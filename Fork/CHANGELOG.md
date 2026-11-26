@@ -6,6 +6,31 @@ Les changements notables de Hublot, fork non officiel de Vorssaint. Le format su
 l'app l'affiche dans « Nouveautés » et dans les notes de version, et la page GitHub de
 la version reprend le même texte.
 
+## [0.4.0] - 2026-11-26
+
+### Summary
+La maison entre dans l'île avec Home Assistant et l'imprimante 3D Bambu Lab en direct. Un panneau Batterie complet suit le Mac, l'iPhone et l'iPad, et les pages de l'île tiennent sans défiler.
+
+### Added
+- Maison : Home Assistant dans l'île, dans Explorer et dans le menu de la barre des menus. Lumières, interrupteurs, scènes, volets, portail, capteurs et caméras en favoris, avec votre propre jeton rangé dans le trousseau du Mac.
+- Volets : un seul bouton, qui montre le sens de la prochaine course, et un bouton ■ à côté pour arrêter. Un volet aussi exposé comme interrupteur est piloté comme un volet.
+- Portail : Ouvrir ou Fermer, puis Confirmer au second clic.
+- Imprimante 3D Bambu Lab en direct dans l'île, directement sur le réseau local : avancement, temps restant et caméra, avec une tuile Imprimante 3D.
+- Batterie : un panneau détaillé et animé (santé, température, puissance, capacité, consommation par app, historique), une icône de barre des menus redessinée et le raccourci ⌃⌥J.
+- iPhone et iPad : leur batterie lue en Bluetooth, à épingler dans la barre des menus.
+- Alertes de batterie en pilule, réglables dans un éditeur ; le chargeur est annoncé une fois stabilisé, avec le niveau.
+- Traduction : une page dans l'île, la langue au choix, un bouton dans l'accès rapide et une tuile dans le menu.
+- Agents IA : les sessions qui attendent votre réponse, le temps passé par projet, et la reprise en un clic de la session Claude Code d'un projet ou d'une nouvelle session.
+
+### Changed
+- Agents IA et Explorer tiennent sur une page, sans défilement, avec un crayon pour modifier.
+- Bruit de fond : toutes les ambiances et tous les sons sont visibles d'un coup dans l'île.
+- Les vidéos sont enregistrées dans le dossier des captures, et non plus sur le Bureau.
+
+### Fixed
+- Capture défilante lancée depuis ⇧⌘5 : la zone encadrée est gardée.
+- Gestes de fenêtre : avec le Dock masqué, le bas des fenêtres ne déclenche plus les gestes du Dock, et la bulle ne s'affiche que si le geste agit.
+
 ## [0.3.0] - 2026-11-24
 
 ### Summary

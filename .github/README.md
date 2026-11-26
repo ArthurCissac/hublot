@@ -2,7 +2,8 @@
 
 Utilitaire macOS tout-en-un : captures et enregistrement d'écran, historique du presse-papiers,
 gestes de fenêtres au trackpad, une fenêtre Entretien (nettoyage, antivirus, maintenance, carte
-du disque) et une Dynamic Island dans l'encoche, avec musique et paroles, Todoist, météo,
+du disque), un panneau Batterie pour le Mac, l'iPhone et l'iPad, et une Dynamic Island dans
+l'encoche, avec musique et paroles, Home Assistant, imprimante 3D Bambu Lab, Todoist, météo,
 déploiements Vercel, bruit de fond et traduction. Fork non officiel de [Vorssaint](https://github.com/vorssaint/vorssaint-utils),
 sous licence GPL-3.0-or-later.
 
@@ -27,10 +28,12 @@ installez la dernière version une fois à la main.
 ## Vie privée
 
 Aucune mesure d'audience, aucun compte Hublot. Les intégrations facultatives ne contactent que le
-service concerné, uniquement quand vous les activez : Todoist, Vercel et la file d'attente de
-Spotify avec votre propre accès, rangé dans le trousseau du Mac ; la météo (Open-Meteo), les
+service concerné, uniquement quand vous les activez : Home Assistant, Todoist, Vercel et la file
+d'attente de Spotify avec votre propre accès, rangé dans le trousseau du Mac ; l'imprimante Bambu
+Lab directement sur le réseau local, son code d'accès dans le trousseau ; la météo (Open-Meteo), les
 paroles (LRCLIB), les taux de change (BCE) et les signatures de l'antivirus (ClamAV), sans compte.
-La traduction et le bruit de fond fonctionnent sur le Mac, sans réseau.
+La batterie de l'iPhone et de l'iPad est lue en Bluetooth. La traduction et le bruit de fond
+fonctionnent sur le Mac, sans réseau.
 
 ## Code source
 
@@ -44,9 +47,9 @@ l'app d'origine.
 # Hublot (English)
 
 An all-in-one macOS utility: screenshots and screen recording, clipboard history, trackpad window
-gestures, a Care window (cleaning, antivirus, maintenance, disk map) and a Dynamic Island in the
-notch with music and lyrics, Todoist, weather, Vercel deployments, background sounds and
-translation. An
+gestures, a Care window (cleaning, antivirus, maintenance, disk map), a Battery panel for the Mac,
+iPhone and iPad, and a Dynamic Island in the notch with music and lyrics, Home Assistant, a Bambu
+Lab 3D printer, Todoist, weather, Vercel deployments, background sounds and translation. An
 unofficial fork of [Vorssaint](https://github.com/vorssaint/vorssaint-utils), under the
 GPL-3.0-or-later license.
 
@@ -61,6 +64,8 @@ changed, verifies its signature and installs it. If you have 0.1, install the la
 hand.
 
 **Privacy:** no analytics, no Hublot account. Optional integrations only reach their own service,
-only while turned on: Todoist, Vercel and the Spotify queue with your own access, kept in the Mac's
-Keychain; weather (Open-Meteo), lyrics (LRCLIB), exchange rates (ECB) and antivirus signatures
-(ClamAV) without an account. Translation and background sounds work on the Mac, offline.
+only while turned on: Home Assistant, Todoist, Vercel and the Spotify queue with your own access,
+kept in the Mac's Keychain; the Bambu Lab printer directly on the local network, its access code in
+the Keychain; weather (Open-Meteo), lyrics (LRCLIB), exchange rates (ECB) and antivirus signatures
+(ClamAV) without an account. iPhone and iPad battery levels come over Bluetooth. Translation and
+background sounds work on the Mac, offline.
